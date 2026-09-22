@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="alert alert-danger">You do not have permission to perform that action.</div>
+<a href="{% url 'dashboard:home' %}">Back to dashboard</a>
+{% endblock %}

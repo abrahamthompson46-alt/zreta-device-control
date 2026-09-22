@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<device-admin>
+    <!-- Phase 2 does not enforce device restrictions. Policies are declared empty on purpose. -->
+    <uses-policies />
+</device-admin>

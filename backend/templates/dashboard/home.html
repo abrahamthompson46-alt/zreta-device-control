@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">{{ current_organization.name }}</h1>
+<p class="text-muted">Consent-based device management. Devices appear here only after explicit enrollment (Phase 2 Android agent).</p>
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Devices</div><div class="fs-3">{{ device_count }}</div></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Enrolled</div><div class="fs-3">{{ enrolled_count }}</div></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Pending enrollments</div><div class="fs-3">{{ pending_enrollments }}</div></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Your role</div><div class="fs-5">{{ current_membership.role }}</div></div></div></div>
+</div>
+<div class="alert alert-warning">
+  An ordinary installation of the Android application on an already-configured phone does not make the phone Device Owner.
+  Device Owner provisioning happens during device setup (typically after a factory reset) using a short-lived enrollment session.
+</div>
+<h2 class="h5">Recent audit events</h2>
+<table class="table table-sm bg-white">
+  <thead><tr><th>When</th><th>Action</th><th>Actor</th><th>Result</th></tr></thead>
+  <tbody>
+  {% for event in recent_audit %}
+    <tr>
+      <td>{{ event.timestamp }}</td>
+      <td>{{ event.action }}</td>
+      <td>{{ event.actor_user.email|default:"—" }}</td>
+      <td>{{ event.result }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="4">No audit events yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

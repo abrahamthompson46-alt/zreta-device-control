@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Devices{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Devices</h1>
+  {% if current_membership.can_manage %}
+    <a class="btn btn-primary" href="{% url 'dashboard:enroll' %}">Add Device</a>
+  {% endif %}
+</div>
+<p class="text-muted">No Android devices are enrolled in Phase 1. This list stays empty until Phase 2 device enrollment.</p>
+<table class="table table-striped bg-white">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Management mode</th>
+      <th>Status</th>
+      <th>Last seen</th>
+      <th>Enrolled</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for device in devices %}
+    <tr>
+      <td><a href="{% url 'dashboard:device_detail' device.id %}">{{ device.display_name }}</a></td>
+      <td>{{ device.management_mode }}</td>
+      <td>{% if device.is_active %}{{ device.status.connectivity }}{% else %}revoked{% endif %}</td>
+      <td>{{ device.status.last_seen_at|default:"Never" }}</td>
+      <td>{{ device.enrolled_at|default:"—" }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="5">No devices yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

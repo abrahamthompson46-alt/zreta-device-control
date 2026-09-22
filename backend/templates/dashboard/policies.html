@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Policies{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Policies</h1>
+</div>
+<p class="text-muted">Organization policy documents (schema v1). Enforcement of section contents is not active yet — publish and assign only.</p>
+
+{% if can_manage %}
+<form method="post" action="{% url 'dashboard:policy_create' %}" class="card card-body mb-4">
+  {% csrf_token %}
+  <h2 class="h6">Create policy</h2>
+  <div class="row g-2">
+    <div class="col-md-4"><input class="form-control" name="name" placeholder="Name" required></div>
+    <div class="col-md-6"><input class="form-control" name="description" placeholder="Description (optional)"></div>
+    <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Create</button></div>
+  </div>
+</form>
+{% endif %}
+
+<table class="table table-sm bg-white">
+  <thead><tr><th>Name</th><th>Description</th><th>Archived</th><th></th></tr></thead>
+  <tbody>
+  {% for policy in policies %}
+    <tr>
+      <td>{{ policy.name }}</td>
+      <td>{{ policy.description|default:"—" }}</td>
+      <td>{% if policy.archived_at %}yes{% else %}no{% endif %}</td>
+      <td><a href="{% url 'dashboard:policy_detail' policy.id %}">Open</a></td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="4">No policies yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

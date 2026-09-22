@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.ZretaDeviceControl" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#1B4F72</item>
+        <item name="colorPrimaryVariant">#154360</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+    </style>
+</resources>

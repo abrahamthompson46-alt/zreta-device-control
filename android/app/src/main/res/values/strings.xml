@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Zreta Device Control</string>
+    <string name="disclosure_title">Device management disclosure</string>
+    <string name="disclosure_body">This app enrolls the device into Zreta Device Control, a consent-based parental/admin management service.\n\nIf Device Owner provisioning completed through Android setup (QR, NFC, zero-touch, or lab ADB), this device is a managed device. An ordinary installation on an already-configured phone does not make the phone Device Owner.\n\nThe device will send to the server: manufacturer, model, Android version, DPC version, management status, battery level, and connectivity. Location is not collected unless a parent/admin later enables it and you accept a separate location disclosure and Android permission.\n\nBackend destination:\n%1$s\n\nSupport: %2$s</string>
+    <string name="continue_enrollment">I understand and enroll this device</string>
+    <string name="cancel">Cancel</string>
+    <string name="status_unmanaged">Installed but not Device Owner. Ordinary install does not grant management.</string>
+    <string name="status_device_owner">Device Owner is active (supported Android management).</string>
+    <string name="scan_qr">Scan enrollment QR</string>
+    <string name="paste_payload">Paste enrollment JSON</string>
+    <string name="location_disclosure_title">Location sharing disclosure</string>
+    <string name="location_disclosure_body">If you continue, this device will periodically send its approximate location (latitude, longitude, accuracy, and time) to your family organization on Zreta Device Control so a parent or admin can see the latest location and a 30-day history.\n\nLocation is requested through the normal Android permission dialog. This app does not silently grant location, even if Device Owner is active.\n\nFixes are collected about every 15 minutes while sharing is on. There is no live tracking stream.\n\nSharing starts only after a parent/admin enables location for this device, you accept this screen, and Android grants location permission. A parent/admin can disable location at any time; this device will then stop uploading new points.\n\nCamera, microphone, calls, and app lists are not part of this location feature.</string>
+    <string name="location_disclosure_accept">I understand, request location permission</string>
+    <string name="location_settings">Location disclosure and permission</string>
+    <string name="dns_filter_channel_name">DNS filtering</string>
+    <string name="dns_filter_channel_description">Shows when Zreta is running a local DNS filtering connection</string>
+    <string name="dns_filter_notification_title">Zreta DNS filtering active</string>
+    <string name="dns_filter_notification_text">This device is using a local Zreta DNS filter. Non-DNS traffic is not routed through this VPN.</string>
+</resources>

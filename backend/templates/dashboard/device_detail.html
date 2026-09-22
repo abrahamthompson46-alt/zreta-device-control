@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Device{% endblock %}
+{% block content %}
+<h1 class="h3">{{ device.display_name }}</h1>
+<p class="text-muted">Device UUID (identifier, not a secret): <code>{{ device.id }}</code></p>
+{% if not device.enrolled_at %}
+  <div class="alert alert-info">Waiting for device enrollment. Heartbeat, location, and policy are not available in Phase 1.</div>
+{% endif %}
+{% if not device.is_active %}
+  <div class="alert alert-danger">This device is revoked and cannot be managed.</div>
+{% endif %}
+<dl class="row">
+  <dt class="col-sm-3">Management mode</dt><dd class="col-sm-9">{{ device.management_mode }}</dd>
+  <dt class="col-sm-3">Manufacturer / model</dt><dd class="col-sm-9">{{ device.manufacturer|default:"—" }} {{ device.model }}</dd>
+  <dt class="col-sm-3">Last seen</dt><dd class="col-sm-9">{{ device.status.last_seen_at|default:"Never" }}</dd>
+  <dt class="col-sm-3">Connectivity</dt><dd class="col-sm-9">{{ device.status.connectivity }}</dd>
+  <dt class="col-sm-3">Management active</dt><dd class="col-sm-9">{{ device.status.management_active }}</dd>
+</dl>
+{% if can_view_location %}
+<h2 class="h5 mt-4">Location</h2>
+<p>Collection: <strong>{% if device.location_collection_enabled %}enabled{% else %}disabled{% endif %}</strong></p>
+{% if latest_location %}
+  <p>Latest: {{ latest_location.captured_at }} (accuracy {{ latest_location.accuracy_m|default:"—" }} m, source {{ latest_location.source }}{% if latest_location.is_mock %}, mock location flagged{% endif %})</p>
+  <p>Coordinates: {{ latest_location.latitude }}, {{ latest_location.longitude }}
+    — <a href="{{ latest_location.osm_url }}" rel="noopener noreferrer" target="_blank">OpenStreetMap</a></p>
+{% else %}
+  <p class="text-muted">{{ location_empty_reason }}</p>
+{% endif %}
+{% if device.is_active %}
+<form class="d-inline" method="post" action="{% url 'dashboard:device_location_enable' device.id %}">{% csrf_token %}
+  <button class="btn btn-outline-primary btn-sm" type="submit">Enable location collection</button>
+</form>
+<form class="d-inline" method="post" action="{% url 'dashboard:device_location_disable' device.id %}">{% csrf_token %}
+  <button class="btn btn-outline-secondary btn-sm" type="submit">Disable location collection</button>
+</form>
+{% endif %}
+{% if location_history %}
+  <h3 class="h6 mt-3">History (up to 50 points, 30-day retention)</h3>
+  <ul class="list-unstyled">
+    {% for point in location_history %}
+      <li class="mb-1">{{ point.captured_at }} — {{ point.latitude }}, {{ point.longitude }}
+        ({{ point.accuracy_m|default:"—" }} m)
+        <a href="{{ point.osm_url }}" rel="noopener noreferrer" target="_blank">map</a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endif %}
+{% if current_membership.can_manage and device.is_active %}
+<form class="row g-2 mb-3" method="post" action="{% url 'dashboard:device_rename' device.id %}">{% csrf_token %}
+  <div class="col-auto"><input class="form-control" name="display_name" value="{{ device.display_name }}"></div>
+  <div class="col-auto"><button class="btn btn-secondary" type="submit">Rename</button></div>
+</form>
+<form method="post" action="{% url 'dashboard:device_revoke' device.id %}" onsubmit="return confirm('Revoke this device?');">{% csrf_token %}
+  <button class="btn btn-outline-danger" type="submit">Revoke device</button>
+</form>
+{% endif %}
+{% endblock %}

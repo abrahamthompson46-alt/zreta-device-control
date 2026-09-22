@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Add Device{% endblock %}
+{% block content %}
+<h1 class="h3">Add Device</h1>
+<div class="alert alert-warning">
+  <strong>Device Owner is not a normal app install.</strong>
+  An ordinary installation of the Android application on an already-configured phone does not make the phone Device Owner.
+  Enrollment uses a short-lived, single-use secret. The Android Device Owner flow is implemented in Phase 2.
+</div>
+
+{% if created_session %}
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="h5">Waiting for device enrollment.</h2>
+      <p>Show this QR code or secret on the device during setup. It is displayed once and is not stored in plaintext.</p>
+      <p><strong>Session ID:</strong> <code>{{ created_session.id }}</code></p>
+      <p><strong>Expires:</strong> {{ created_session.expires_at }}</p>
+      <p><strong>Provisioning modes:</strong> {{ created_session.allowed_provisioning_modes|join:", " }}</p>
+      <p><strong>One-time secret:</strong></p>
+      <div class="alert alert-secondary secret-box">{{ raw_secret }}</div>
+      <div class="qr-box mb-3">{{ qr_svg|safe }}</div>
+      <p class="small text-muted">QR payload contains only the API base URL, session ID, and this one-time secret. It does not contain parent credentials or long-lived API tokens.</p>
+      <form method="post" action="{% url 'dashboard:enrollment_cancel' created_session.id %}">{% csrf_token %}
+        <button class="btn btn-outline-danger btn-sm" type="submit">Cancel this session</button>
+      </form>
+    </div>
+  </div>
+{% endif %}
+
+{% if current_membership.can_manage %}
+<form method="post">{% csrf_token %}
+  <fieldset class="mb-3">
+    <legend class="h6">Allowed provisioning modes</legend>
+    {{ form.allowed_provisioning_modes }}
+  </fieldset>
+  <button class="btn btn-primary" type="submit">Create enrollment session</button>
+</form>
+{% else %}
+<p>Viewers cannot create enrollment sessions.</p>
+{% endif %}
+{% endblock %}

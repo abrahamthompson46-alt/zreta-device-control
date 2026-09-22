@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: zreta-control-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-zreta_control}
+      POSTGRES_USER: ${POSTGRES_USER:-zreta}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - zreta_control_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-zreta} -d ${POSTGRES_DB:-zreta_control}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  zreta_control_pgdata:
