@@ -10,6 +10,12 @@ urlpatterns = [
         api.AssignmentDetailAPIView.as_view(),
         name="api-policy-assignment-detail",
     ),
+    path("policies/schedules", api.PolicyScheduleListCreateAPIView.as_view(), name="api-policy-schedules"),
+    path(
+        "policies/schedules/<uuid:schedule_id>",
+        api.PolicyScheduleDetailAPIView.as_view(),
+        name="api-policy-schedule-detail",
+    ),
     path("policies", api.PolicyListCreateAPIView.as_view(), name="api-policies"),
     path("policies/<uuid:policy_id>", api.PolicyDetailAPIView.as_view(), name="api-policy-detail"),
     path(

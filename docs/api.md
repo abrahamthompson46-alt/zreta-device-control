@@ -67,6 +67,7 @@ Effective version for an assignment: pinned published version if set, else curre
 | POST | `/api/v1/device/location` | Bearer; batch of location points |
 | GET | `/api/v1/device/policy` | Bearer; effective policy for authenticated device only; supports `If-None-Match` / `ETag` |
 | POST | `/api/v1/device/policy/ack` | Bearer; applied/rejected acknowledgement (idempotent `client_event_id`) |
+| POST | `/api/v1/device/fcm-token` | Bearer; register or clear FCM registration token (`{"token":"..."}` or empty to clear). Wake only — not a command channel. |
 
 Enroll body: `enrollment_session_id`, `enrollment_secret`, `disclosure_accepted`, `public_key_id`, `public_key` (PEM SPKI), `management_mode`, inventory fields. **No private key.**
 
@@ -76,6 +77,19 @@ Location body: `{ "locations": [ { client_event_id, captured_at, latitude, longi
 
 Policy ack body: `{ policy_version_id, version_number, content_hash, applied_at, result, client_event_id }` where `result` is one of `applied`, `rejected_malformed`, `rejected_schema`, `cached_unchanged`.
 
+## Policy schedules (parent, Phase 6)
+
+Session auth + CSRF. Owner/admin mutate; viewer read-only. Schedules **publish a draft** at `activate_at` (UTC). Devices still pull policy via API; FCM wake (if configured) follows publish.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/v1/policies/schedules` | List org schedules |
+| POST | `/api/v1/policies/schedules` | `policy_id`, `version_id` (draft), `activate_at` (future ISO-8601) |
+| GET | `/api/v1/policies/schedules/{id}` | Detail |
+| DELETE | `/api/v1/policies/schedules/{id}` | Cancel pending schedule |
+
+Run due schedules with: `python manage.py process_policy_schedules`
+
 ## Not implemented
 
-Command endpoints, locate-now, geofencing, FCM, PolicySchedule, wipe/kiosk, always-on VPN, UsageStats daily limits.
+Command endpoints, locate-now, geofencing, wipe/kiosk, always-on VPN, UsageStats daily limits.

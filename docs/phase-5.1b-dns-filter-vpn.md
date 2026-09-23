@@ -63,3 +63,10 @@ This slice does not add BOOT_COMPLETED VPN reconciliation. A reboot may leave th
 ## Background FGS start
 
 `PolicyWorker` may call `startForegroundService` from a background WorkManager context. On Android 12+, that can throw `ForegroundServiceStartNotAllowedException`. The controller maps this to `vpn_fgs_start_not_allowed`, remains fail-open (PARTIAL), and never reports APPLIED.
+
+## Phase 5.1C — Consent UI + boot re-enforce
+
+- `VpnConsentActivity` launches `VpnService.prepare()` from an Activity (never from a Worker).
+- When enforcement returns `vpn_consent_required`, a notification + MainActivity CTA open that activity.
+- `BootCompletedReceiver` enqueues a one-shot `PolicyWorker` to re-enforce LKG after reboot (does not start VPN directly).
+- Heartbeat reports `dns_filter_state` / `dns_filter_error` to the backend for dashboard visibility.

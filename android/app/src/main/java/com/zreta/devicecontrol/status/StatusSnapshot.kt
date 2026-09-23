@@ -41,6 +41,18 @@ object StatusSnapshot {
             appendLine("Location sharing: ${store.locationSharingState()}")
             appendLine("Policy: ${com.zreta.devicecontrol.policy.PolicyCache(context).statusSummary()}")
             appendLine("Enforcement: ${enforcementSummary(context)}")
+            try {
+                val dns = com.zreta.devicecontrol.network.DnsFilterTelemetry.current(context)
+                appendLine(
+                    "DNS filter: ${dns.state}" +
+                        if (dns.error != null) " (${dns.error})" else "",
+                )
+                if (com.zreta.devicecontrol.network.VpnConsentCoordinator.isPending(context)) {
+                    appendLine("VPN consent: pending — open Allow DNS filtering VPN")
+                }
+            } catch (_: Exception) {
+                appendLine("DNS filter: unavailable")
+            }
             appendLine("DPC version: ${BuildConfig.VERSION_NAME}")
         }
     }

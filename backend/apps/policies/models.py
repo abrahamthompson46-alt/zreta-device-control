@@ -221,3 +221,56 @@ class DevicePolicyAssignment(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
+
+
+class PolicyScheduleStatus(models.TextChoices):
+    PENDING = "pending", "Pending"
+    COMPLETED = "completed", "Completed"
+    CANCELLED = "cancelled", "Cancelled"
+    FAILED = "failed", "Failed"
+
+
+class PolicySchedule(models.Model):
+    """
+    Schedule publishing a draft policy version at activate_at (UTC).
+    FCM wake follows publish. Not a device-local bedtime schedule.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        "accounts.Organization",
+        on_delete=models.CASCADE,
+        related_name="policy_schedules",
+    )
+    policy = models.ForeignKey(Policy, on_delete=models.CASCADE, related_name="schedules")
+    version = models.ForeignKey(
+        PolicyVersion,
+        on_delete=models.CASCADE,
+        related_name="schedules",
+    )
+    activate_at = models.DateTimeField()
+    status = models.CharField(
+        max_length=20,
+        choices=PolicyScheduleStatus.choices,
+        default=PolicyScheduleStatus.PENDING,
+        db_index=True,
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_policy_schedules",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(blank=True, null=True)
+    last_error = models.CharField(max_length=64, blank=True, null=True)
+
+    class Meta:
+        ordering = ["activate_at"]
+        indexes = [
+            models.Index(fields=["status", "activate_at"], name="pol_sched_status_act_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"Schedule {self.version_id} @ {self.activate_at}"

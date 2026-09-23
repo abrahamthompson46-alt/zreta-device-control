@@ -169,5 +169,9 @@ LOCATION_HISTORY_MAX = int(env("LOCATION_HISTORY_MAX", "200") or "200")
 POLICY_DOCUMENT_MAX_BYTES = int(env("POLICY_DOCUMENT_MAX_BYTES", "65536") or "65536")
 POLICY_SCHEMA_VERSION = 1
 
+# FCM wake (Phase 6). Optional — without credentials, publish still succeeds and wake is no-op.
+FIREBASE_CREDENTIALS_JSON = env("FIREBASE_CREDENTIALS_JSON", "") or ""
+FIREBASE_CREDENTIALS_FILE = env("FIREBASE_CREDENTIALS_FILE", "") or ""
+
 # MFA is not implemented in Phase 1. User.mfa_enabled exists as a future hook only.
 MFA_ENABLED = False

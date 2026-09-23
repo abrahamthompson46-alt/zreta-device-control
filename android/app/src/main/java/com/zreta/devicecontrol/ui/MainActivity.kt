@@ -51,12 +51,23 @@ class MainActivity : AppCompatActivity() {
         binding.locationDisclosure.setOnClickListener {
             startActivity(Intent(this, LocationDisclosureActivity::class.java))
         }
+        binding.vpnConsent.setOnClickListener {
+            startActivity(Intent(this, com.zreta.devicecontrol.network.VpnConsentActivity::class.java))
+        }
     }
 
     override fun onResume() {
         super.onResume()
         refreshLocationFlag()
         refreshStatus()
+        refreshVpnConsentButton()
+    }
+
+    private fun refreshVpnConsentButton() {
+        val pending = com.zreta.devicecontrol.network.VpnConsentCoordinator.isPending(this) ||
+            com.zreta.devicecontrol.network.DnsFilterTelemetry.current(this).state ==
+            com.zreta.devicecontrol.network.DnsFilterTelemetry.CONSENT_REQUIRED
+        binding.vpnConsent.visibility = if (pending) android.view.View.VISIBLE else android.view.View.GONE
     }
 
     private fun refreshLocationFlag() {

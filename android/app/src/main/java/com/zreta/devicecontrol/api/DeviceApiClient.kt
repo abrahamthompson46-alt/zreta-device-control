@@ -77,6 +77,8 @@ class DeviceApiClient(
         connectivity: String,
         batteryLevel: Int?,
         dpcVersion: String,
+        dnsFilterState: String? = null,
+        dnsFilterError: String? = null,
     ): JSONObject {
         val body = JSONObject()
             .put("app_version", appVersion)
@@ -89,6 +91,12 @@ class DeviceApiClient(
             .put("dpc_version", dpcVersion)
         if (batteryLevel != null) {
             body.put("battery_level", batteryLevel)
+        }
+        if (!dnsFilterState.isNullOrBlank()) {
+            body.put("dns_filter_state", dnsFilterState)
+        }
+        if (!dnsFilterError.isNullOrBlank()) {
+            body.put("dns_filter_error", dnsFilterError)
         }
         SafeLog.i("POST /api/v1/device/heartbeat")
         return postJson(apiBase, "/api/v1/device/heartbeat", body, bearer = accessToken)
@@ -141,6 +149,12 @@ class DeviceApiClient(
     fun ackPolicy(apiBase: String, accessToken: String, body: JSONObject): JSONObject {
         SafeLog.i("POST /api/v1/device/policy/ack")
         return postJson(apiBase, "/api/v1/device/policy/ack", body, bearer = accessToken)
+    }
+
+    fun registerFcmToken(apiBase: String, accessToken: String, token: String): JSONObject {
+        val body = JSONObject().put("token", token)
+        SafeLog.i("POST /api/v1/device/fcm-token")
+        return postJson(apiBase, "/api/v1/device/fcm-token", body, bearer = accessToken)
     }
 
     private fun postJson(apiBase: String, path: String, body: JSONObject, bearer: String?): JSONObject {

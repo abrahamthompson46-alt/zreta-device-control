@@ -66,6 +66,8 @@ class Device(models.Model):
     is_active = models.BooleanField(default=True)
     location_collection_enabled = models.BooleanField(default=False)
     location_authorized_at = models.DateTimeField(blank=True, null=True)
+    fcm_registration_token = models.CharField(max_length=512, blank=True, null=True)
+    fcm_token_updated_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -164,6 +166,13 @@ class DeviceAssertionJti(models.Model):
 
 
 class DeviceStatus(models.Model):
+    class DnsFilterReportedState(models.TextChoices):
+        UNKNOWN = "unknown", "Unknown"
+        STOPPED = "stopped", "Stopped"
+        RUNNING = "running", "Running"
+        CONSENT_REQUIRED = "consent_required", "VPN consent required"
+        FAILED = "failed", "Failed"
+
     device = models.OneToOneField(Device, on_delete=models.CASCADE, related_name="status")
     last_seen_at = models.DateTimeField(blank=True, null=True)
     battery_level = models.PositiveSmallIntegerField(blank=True, null=True)
@@ -186,6 +195,12 @@ class DeviceStatus(models.Model):
     policy_ack_result = models.CharField(max_length=32, blank=True, null=True)
     policy_ack_client_event_id = models.UUIDField(blank=True, null=True)
     policy_last_error = models.CharField(max_length=32, blank=True, null=True)
+    dns_filter_state = models.CharField(
+        max_length=32,
+        choices=DnsFilterReportedState.choices,
+        default=DnsFilterReportedState.UNKNOWN,
+    )
+    dns_filter_error = models.CharField(max_length=64, blank=True, null=True)
     last_location = models.ForeignKey(
         "LocationRecord",
         on_delete=models.SET_NULL,

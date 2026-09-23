@@ -19,7 +19,8 @@ Pending physical-device verification includes Phase 2 items plus location disclo
 
 - Geofencing, locate-now, live streaming, SOS
 - Internet, call, application, or screen-time controls
-- FCM command channel
+- FCM as an authoritative command channel (wake-only is implemented)
+- Wipe/kiosk, always-on VPN, UsageStats daily limits
 - Production deployment
 
 **Product limitation:** an ordinary installation of the Android application on an already-configured phone does not make the phone Device Owner.

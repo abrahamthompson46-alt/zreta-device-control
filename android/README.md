@@ -74,7 +74,7 @@ Off by default. A parent/admin enables collection; the device shows a separate d
 
 ## FCM
 
-NOT IMPLEMENTED. Authoritative state remains the Django API.
+Wake-only. Place `android/app/google-services.json` for Firebase (plugin applied only when that file exists). On `policy_wake` data messages, `ZretaFirebaseMessagingService` enqueues `PolicyWorker`. Token registration: `POST /api/v1/device/fcm-token` after heartbeat / token refresh. Authoritative state remains the Django API.
 
 ## Crypto
 

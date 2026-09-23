@@ -104,6 +104,8 @@ class DeviceHeartbeatAPIView(APIView):
                 connectivity=data.get("connectivity"),
                 battery_level=data.get("battery_level"),
                 dpc_version=data.get("dpc_version"),
+                dns_filter_state=data.get("dns_filter_state"),
+                dns_filter_error=data.get("dns_filter_error"),
             )
         except DeviceAuthError as exc:
             return Response({"detail": str(exc), "code": exc.code}, status=status.HTTP_401_UNAUTHORIZED)
@@ -120,6 +122,8 @@ class DeviceHeartbeatAPIView(APIView):
                 "location_collection_enabled": device.location_collection_enabled,
                 "policy_version_number": effective.get("version_number"),
                 "policy_assignment_state": effective.get("assignment_state"),
+                "dns_filter_state": st.dns_filter_state,
+                "dns_filter_error": st.dns_filter_error,
             }
         )
 
@@ -153,6 +157,8 @@ class DeviceMeAPIView(APIView):
                 "location_collection_enabled": device.location_collection_enabled,
                 "policy_version_number": effective.get("version_number"),
                 "policy_assignment_state": effective.get("assignment_state"),
+                "dns_filter_state": st.dns_filter_state if st else "unknown",
+                "dns_filter_error": st.dns_filter_error if st else None,
             }
         )
 
@@ -224,3 +230,28 @@ class DevicePolicyAckAPIView(APIView):
         except PolicyError as exc:
             return Response({"detail": str(exc), "code": exc.code}, status=status.HTTP_400_BAD_REQUEST)
         return Response(result)
+
+
+class DeviceFcmTokenAPIView(APIView):
+    """Register or clear the device FCM registration token for policy wake."""
+
+    authentication_classes = [DeviceJWTAuthentication]
+    permission_classes = [IsEnrolledDevice]
+
+    def post(self, request):
+        from apps.devices.fcm import clear_fcm_token, register_fcm_token
+
+        data = request.data
+        token = data.get("token")
+        device = request.user.device
+        if token in (None, ""):
+            clear_fcm_token(device=device)
+            return Response({"ok": True, "registered": False})
+        try:
+            register_fcm_token(device=device, token=str(token))
+        except ValueError:
+            return Response(
+                {"detail": "Invalid FCM token.", "code": "invalid_fcm_token"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response({"ok": True, "registered": True})

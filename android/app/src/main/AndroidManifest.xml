@@ -38,6 +38,10 @@
             android:name=".location.LocationDisclosureActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".network.VpnConsentActivity"
+            android:exported="false" />
+
 
         <activity
             android:name=".dpc.GetProvisioningModeActivity"
@@ -71,6 +75,24 @@
                 <action android:name="android.app.action.PROFILE_PROVISIONING_COMPLETE" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".network.BootCompletedReceiver"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- FCM wake only — not an authoritative command channel. -->
+        <service
+            android:name=".fcm.ZretaFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <!-- Local DNS filter VPN: disclosed foreground service, not always-on / lockdown. -->
         <service

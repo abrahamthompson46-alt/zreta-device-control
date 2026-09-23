@@ -12,6 +12,7 @@ from apps.devices.models import (
     CredentialStatus,
     Device,
     DeviceCredential,
+    DeviceStatus,
     EnrollmentSession,
     ManagementMode,
 )
@@ -159,6 +160,8 @@ def record_heartbeat(
     connectivity: str | None,
     battery_level: int | None,
     dpc_version: str | None,
+    dns_filter_state: str | None = None,
+    dns_filter_error: str | None = None,
 ) -> Device:
     device = Device.objects.select_for_update().get(pk=device.pk)
     if not device.is_active:
@@ -184,5 +187,17 @@ def record_heartbeat(
         status.connectivity = ConnectivityStatus.ONLINE
     if battery_level is not None:
         status.battery_level = max(0, min(100, int(battery_level)))
+    if dns_filter_state in DeviceStatus.DnsFilterReportedState.values:
+        status.dns_filter_state = dns_filter_state
+        if dns_filter_state in (
+            DeviceStatus.DnsFilterReportedState.RUNNING,
+            DeviceStatus.DnsFilterReportedState.STOPPED,
+            DeviceStatus.DnsFilterReportedState.UNKNOWN,
+        ):
+            status.dns_filter_error = None
+        elif dns_filter_error:
+            status.dns_filter_error = str(dns_filter_error)[:64]
+        elif dns_filter_state == DeviceStatus.DnsFilterReportedState.CONSENT_REQUIRED:
+            status.dns_filter_error = "vpn_consent_required"
     status.save()
     return device

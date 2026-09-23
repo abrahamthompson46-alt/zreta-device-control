@@ -24,6 +24,10 @@ class PolicyComplianceActivity : Activity() {
             versionNumber = cache.versionNumber().takeIf { it > 0 },
             contentHash = cache.contentHash(),
         )
+        com.zreta.devicecontrol.network.VpnConsentCoordinator.handleEnforcementResult(
+            applicationContext,
+            evaluation.enforcement,
+        )
         if (evaluation.compliant) {
             setResult(RESULT_OK)
         } else {

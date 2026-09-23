@@ -41,4 +41,5 @@ urlpatterns = [
     path("device/location", device_api.DeviceLocationUploadAPIView.as_view(), name="api-device-location"),
     path("device/policy", device_api.DevicePolicyAPIView.as_view(), name="api-device-policy"),
     path("device/policy/ack", device_api.DevicePolicyAckAPIView.as_view(), name="api-device-policy-ack"),
+    path("device/fcm-token", device_api.DeviceFcmTokenAPIView.as_view(), name="api-device-fcm-token"),
 ]

@@ -144,7 +144,9 @@ def revoke_device(*, device: Device, actor_user, request_meta: dict | None = Non
         raise EnrollmentError("Device is already revoked.", "already_revoked")
     old = {"is_active": True}
     device.is_active = False
-    device.save(update_fields=["is_active", "updated_at"])
+    device.fcm_registration_token = None
+    device.fcm_token_updated_at = timezone.now()
+    device.save(update_fields=["is_active", "fcm_registration_token", "fcm_token_updated_at", "updated_at"])
     device.credentials.filter(status=CredentialStatus.ACTIVE).update(
         status=CredentialStatus.REVOKED,
         revoked_at=timezone.now(),

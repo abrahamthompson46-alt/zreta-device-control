@@ -11,7 +11,7 @@
 | Silent promote to Device Owner after setup | NOT APPROPRIATE / NOT IMPLEMENTED |
 | Android Keystore EC P-256 | SUPPORTED |
 | WorkManager heartbeat | SUPPORTED WITH CONDITIONS (OEM battery managers may delay) |
-| FCM wake | NOT IMPLEMENTED |
+| FCM wake | SUPPORTED WITH CONDITIONS (data-only wake → PolicyWorker pull; requires Firebase + google-services.json; not a command channel) |
 | Location / internet / calls / app block / screen time / lock / wipe | Location: Phase 3 (consent + OS permission). Policy sections: Phase 4.7–4.8 Device Owner enforcement (apps/device/calls/internet/bedtime); location policy advisory only. Lock/wipe/VPN lockdown/UsageStats: NOT IMPLEMENTED |
 | Covert persistence after factory reset | NOT APPROPRIATE |
 

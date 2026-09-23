@@ -80,7 +80,7 @@ Matching semantics (for the future VpnService in 5.1B): a lookup host `Q` is blo
 
 Rejected in `traffic`: `always_on`, `lockdown`, unknown keys, IP literals, schemes/paths/ports, empty labels.
 
-**Phase 5.1B status:** local `DnsFilterVpnService` implements disclosed, fail-open, DNS-only VpnService filtering (narrow routes, NXDOMAIN for blocked names, UDP upstream with `protect()`). Not always-on / lockdown. TCP DNS, DoH, and DoT are out of scope for this slice. Physical-device validation remains mandatory.
+**Phase 5.1C status:** VPN consent is requested from `VpnConsentActivity` (not Workers). Boot completed enqueues policy re-enforce. Heartbeat reports `dns_filter_state` / `dns_filter_error` for parent dashboard visibility. Still not always-on / lockdown. Physical-device validation remains mandatory.
 `screen_time` may include only (best-effort bedtime windows; **no** `lockNow`, **no** UsageStats daily limits):
 
 - `bedtime_start` / `bedtime_end`: `HH:MM` local time (both required together; **must differ** — equal values are rejected)
@@ -148,4 +148,9 @@ Android Device Owner enforcement for `applications` (suspend / hide / uninstall-
 
 ### Still not implemented
 
-FCM, PolicySchedule, wipe/kiosk, always-on VPN lockdown, UsageStats daily screen limits, physical-device verification.
+Wipe/kiosk, always-on VPN lockdown, UsageStats daily screen limits, physical-device verification.
+
+### Phase 6 — FCM wake + PolicySchedule
+
+- **FCM:** Device registers token; publish/schedule triggers optional data-only wake; Android enqueues PolicyWorker. Authoritative policy remains `GET /device/policy`.
+- **PolicySchedule:** Parent schedules draft publish at UTC `activate_at`; `manage.py process_policy_schedules` processes due rows.

@@ -211,6 +211,17 @@ def publish_version(
         new_snapshot=_version_audit_snapshot(draft),
         **meta,
     )
+    try:
+        from apps.devices.fcm import wake_devices_for_policy
+
+        wake_devices_for_policy(
+            organization_id=organization.id,
+            policy_id=policy.id,
+            reason="policy_published",
+        )
+    except Exception:
+        # Wake must never fail publish.
+        pass
     return draft
 
 

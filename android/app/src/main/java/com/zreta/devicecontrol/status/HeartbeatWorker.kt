@@ -38,6 +38,7 @@ class HeartbeatWorker(
                 store.saveSession(apiBase, deviceId, kid, token, System.currentTimeMillis() / 1000 + ttl)
             }
             val state = ManagementStateDetector.detect(applicationContext)
+            val dns = com.zreta.devicecontrol.network.DnsFilterTelemetry.current(applicationContext)
             val heartbeat = client.heartbeat(
                 apiBase = apiBase,
                 accessToken = token!!,
@@ -50,6 +51,8 @@ class HeartbeatWorker(
                 connectivity = "online",
                 batteryLevel = batteryPct(applicationContext),
                 dpcVersion = BuildConfig.VERSION_NAME,
+                dnsFilterState = dns.state,
+                dnsFilterError = dns.error,
             )
             if (heartbeat.has("location_collection_enabled")) {
                 store.setLocationCollectionEnabled(heartbeat.getBoolean("location_collection_enabled"))
@@ -67,6 +70,7 @@ class HeartbeatWorker(
                 .putLong("last_heartbeat", System.currentTimeMillis())
                 .putString("last_heartbeat_result", "ok")
                 .apply()
+            com.zreta.devicecontrol.fcm.FcmTokenRegistrar.refreshAndRegister(applicationContext)
             Result.success()
         } catch (ex: Exception) {
             SafeLog.e("Heartbeat failed", ex)

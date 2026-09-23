@@ -16,6 +16,7 @@ dependencies = [
     "PyJWT>=2.9,<3",
     "cryptography>=44,<47",
     "gunicorn>=23,<24",
+    "firebase-admin>=6.5,<7",
 ]
 
 [project.optional-dependencies]

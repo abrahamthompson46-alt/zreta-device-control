@@ -146,6 +146,10 @@ class PolicyWorker(
             SafeLog.w("Enforcer rejected older version; no ACK")
             return Result.success()
         }
+        com.zreta.devicecontrol.network.VpnConsentCoordinator.handleEnforcementResult(
+            applicationContext,
+            enforcement,
+        )
         val ackResult = ackResultFor(enforcement)
         if (enforcement?.outcome == EnforcementOutcome.FAILED) {
             SafeLog.w("Policy enforcement failed; tracked successes preserved; no applied ACK")

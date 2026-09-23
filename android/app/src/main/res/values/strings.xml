@@ -16,4 +16,14 @@
     <string name="dns_filter_channel_description">Shows when Zreta is running a local DNS filtering connection</string>
     <string name="dns_filter_notification_title">Zreta DNS filtering active</string>
     <string name="dns_filter_notification_text">This device is using a local Zreta DNS filter. Non-DNS traffic is not routed through this VPN.</string>
+    <string name="vpn_consent_title">Allow DNS filtering VPN</string>
+    <string name="vpn_consent_body">Zreta Device Control needs Android VPN permission to run a local DNS filter on this device.\n\nThis is a disclosed, on-device filter. It does not send your browsing to a remote VPN server. Only classic DNS name lookups are filtered according to your organization policy. Other internet traffic stays on the normal network.\n\nYou will see a system VPN consent dialog next. You can deny it; filtering will stay off (fail-open) until consent is granted.</string>
+    <string name="vpn_consent_continue">Continue to Android VPN consent</string>
+    <string name="vpn_consent_denied">VPN consent was not granted. DNS filtering remains off.</string>
+    <string name="vpn_consent_granted">VPN consent recorded. Re-applying policy…</string>
+    <string name="vpn_consent_notification_title">DNS filter needs VPN permission</string>
+    <string name="vpn_consent_notification_text">Tap to allow Zreta\'s local DNS filtering connection.</string>
+    <string name="vpn_consent_channel_name">DNS filter consent</string>
+    <string name="vpn_consent_channel_description">Asks you to allow the local DNS filtering VPN</string>
+    <string name="vpn_consent_settings">Allow DNS filtering VPN</string>
 </resources>

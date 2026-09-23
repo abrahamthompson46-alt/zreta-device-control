@@ -8,7 +8,7 @@ Location is consent-based, parent-enabled, and on-device disclosed. It is not co
 
 Latitude, longitude, horizontal accuracy, capture time, server receipt time, source (`fused` / `gps` / `network` / `unknown`), mock flag, and a device-generated `client_event_id`.
 
-Not collected: speed, bearing, SSID, street address, movement traces, IMEI, Android ID, serial, FCM tokens.
+Not collected: speed, bearing, SSID, street address, movement traces, IMEI, Android ID, serial.
 
 ## Consent chain
 
@@ -54,4 +54,4 @@ Owner/admin device detail shows latest coordinates, accuracy, timestamp, mock fl
 
 ## Not in Phase 3
 
-Geofencing, locate-now, live streaming, SOS, call/app/screen-time/network controls, FCM.
+Geofencing, locate-now, live streaming, SOS, wipe/kiosk, always-on VPN, UsageStats daily limits.

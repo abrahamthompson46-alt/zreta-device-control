@@ -226,9 +226,32 @@ def test_device_token_and_heartbeat_and_me(client, enrollment):
     device = Device.objects.get(pk=device_id)
     assert device.status.battery_level == 77
     assert device.status.management_active is True
+
+    beat_dns = client.post(
+        "/api/v1/device/heartbeat",
+        {
+            "app_version": "0.2.0",
+            "android_version": "15",
+            "management_active": True,
+            "management_mode": "device_owner",
+            "connectivity": "online",
+            "battery_level": 77,
+            "dpc_version": "0.2.0",
+            "dns_filter_state": "consent_required",
+            "dns_filter_error": "vpn_consent_required",
+        },
+        content_type="application/json",
+        **auth,
+    )
+    assert beat_dns.status_code == 200
+    assert beat_dns.json()["dns_filter_state"] == "consent_required"
+    device.refresh_from_db()
+    assert device.status.dns_filter_state == "consent_required"
+    assert device.status.dns_filter_error == "vpn_consent_required"
     me = client.get("/api/v1/device/me", **auth)
     assert me.status_code == 200
     assert me.json()["id"] == device_id
+    assert me.json()["dns_filter_state"] == "consent_required"
     assert "access_token" not in me.json()
 
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.utils.dateparse import parse_datetime
 from rest_framework import serializers, status
 from rest_framework.exceptions import APIException, NotFound, PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -23,7 +24,14 @@ from apps.policies.lifecycle import (
     rollback_to_version,
     update_draft_version,
 )
-from apps.policies.models import DevicePolicyAssignment, Policy, PolicyVersion, PolicyVersionStatus
+from apps.policies.models import (
+    DevicePolicyAssignment,
+    Policy,
+    PolicySchedule,
+    PolicyVersion,
+    PolicyVersionStatus,
+)
+from apps.policies.schedules import cancel_policy_schedule, schedule_policy_publish
 
 
 def _policy_error(exc: PolicyError):
@@ -32,11 +40,16 @@ def _policy_error(exc: PolicyError):
         "version_not_found",
         "device_not_found",
         "assignment_not_found",
+        "schedule_not_found",
     }:
         raise NotFound(str(exc)) from exc
 
     class PolicyAPIError(APIException):
-        status_code = status.HTTP_409_CONFLICT if exc.code == "assignment_exists" else status.HTTP_400_BAD_REQUEST
+        status_code = (
+            status.HTTP_409_CONFLICT
+            if exc.code in {"assignment_exists", "schedule_exists"}
+            else status.HTTP_400_BAD_REQUEST
+        )
         default_code = exc.code
 
     raise PolicyAPIError(detail={"detail": str(exc), "code": exc.code}) from exc
@@ -391,6 +404,92 @@ class AssignmentDetailAPIView(OrganizationAPIMixin, APIView):
             unassign_device_policy(
                 organization=self.organization,
                 assignment_id=assignment_id,
+                actor_user=request.user,
+                request_meta=request_meta(request),
+            )
+        except PolicyError as exc:
+            _policy_error(exc)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PolicyScheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PolicySchedule
+        fields = (
+            "id",
+            "policy",
+            "version",
+            "activate_at",
+            "status",
+            "created_by",
+            "created_at",
+            "completed_at",
+            "last_error",
+        )
+        read_only_fields = fields
+
+
+def org_schedule(organization, schedule_id) -> PolicySchedule:
+    schedule = (
+        PolicySchedule.objects.filter(pk=schedule_id, organization=organization)
+        .select_related("policy", "version")
+        .first()
+    )
+    if schedule is None:
+        raise NotFound("Schedule not found.")
+    return schedule
+
+
+class PolicyScheduleListCreateAPIView(OrganizationAPIMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        schedules = (
+            PolicySchedule.objects.filter(organization=self.organization)
+            .select_related("policy", "version")
+            .order_by("activate_at")
+        )
+        return Response(PolicyScheduleSerializer(schedules, many=True).data)
+
+    def post(self, request):
+        if not self.membership.can_manage:
+            raise PermissionDenied("This action requires an owner or admin role.")
+        raw_activate = request.data.get("activate_at")
+        activate_at = raw_activate
+        if isinstance(raw_activate, str):
+            activate_at = parse_datetime(raw_activate)
+            if activate_at is None:
+                raise ValidationError({"activate_at": "Invalid ISO-8601 datetime."})
+        try:
+            schedule = schedule_policy_publish(
+                organization=self.organization,
+                policy_id=request.data.get("policy_id"),
+                version_id=request.data.get("version_id"),
+                activate_at=activate_at,
+                actor_user=request.user,
+                request_meta=request_meta(request),
+            )
+        except PolicyError as exc:
+            _policy_error(exc)
+        schedule = org_schedule(self.organization, schedule.id)
+        return Response(PolicyScheduleSerializer(schedule).data, status=status.HTTP_201_CREATED)
+
+
+class PolicyScheduleDetailAPIView(OrganizationAPIMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, schedule_id):
+        schedule = org_schedule(self.organization, schedule_id)
+        return Response(PolicyScheduleSerializer(schedule).data)
+
+    def delete(self, request, schedule_id):
+        if not self.membership.can_manage:
+            raise PermissionDenied("This action requires an owner or admin role.")
+        org_schedule(self.organization, schedule_id)
+        try:
+            cancel_policy_schedule(
+                organization=self.organization,
+                schedule_id=schedule_id,
                 actor_user=request.user,
                 request_meta=request_meta(request),
             )

@@ -18,7 +18,7 @@ Managed Android DPC  --HTTPS (or documented local cleartext)--  `/api/v1/device/
 
 Unchanged Django apps. Additive device endpoints live in `apps.devices.device_api`.
 
-Phase 4.1–4.8 cover policy models, lifecycle, parent APIs, device pull/ack, Android LKG cache, dashboard assign/publish, and Device Owner enforcement for applications/device/calls/internet/screen-time bedtime plus an advisory location adapter — see [policy-schema.md](policy-schema.md) and [api.md](api.md). **NOT IMPLEMENTED:** FCM, PolicySchedule, wipe/kiosk, always-on VPN, UsageStats daily limits.
+Phase 4.1–4.8 cover policy models, lifecycle, parent APIs, device pull/ack, Android LKG cache, dashboard assign/publish, and Device Owner enforcement for applications/device/calls/internet/screen-time bedtime plus an advisory location adapter — see [policy-schema.md](policy-schema.md) and [api.md](api.md). Phase 6 adds FCM policy wake and PolicySchedule (server-side scheduled publish). **NOT IMPLEMENTED:** wipe/kiosk, always-on VPN, UsageStats daily limits.
 
 ## Device authentication
 
@@ -38,4 +38,4 @@ Separate `POST /api/v1/device/location` using the Phase 2 device JWT. `location_
 
 ## FCM
 
-NOT IMPLEMENTED. Not an authoritative command channel.
+Data-only **policy wake** (not an authoritative command channel). Devices register tokens via `POST /api/v1/device/fcm-token`. On policy publish (including scheduled publish), the backend may send FCM data `{type: policy_wake}` when `FIREBASE_CREDENTIALS_JSON` or `FIREBASE_CREDENTIALS_FILE` is set. The Android app enqueues `PolicyWorker`, which still pulls policy from the Django API. Without Firebase credentials, publish succeeds and wake is skipped.

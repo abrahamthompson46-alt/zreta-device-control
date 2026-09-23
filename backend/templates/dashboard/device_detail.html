@@ -15,6 +15,20 @@
   <dt class="col-sm-3">Last seen</dt><dd class="col-sm-9">{{ device.status.last_seen_at|default:"Never" }}</dd>
   <dt class="col-sm-3">Connectivity</dt><dd class="col-sm-9">{{ device.status.connectivity }}</dd>
   <dt class="col-sm-3">Management active</dt><dd class="col-sm-9">{{ device.status.management_active }}</dd>
+  <dt class="col-sm-3">DNS filter</dt>
+  <dd class="col-sm-9">
+    {{ device.status.dns_filter_state|default:"unknown" }}
+    {% if device.status.dns_filter_error %}
+      <span class="text-muted">({{ device.status.dns_filter_error }})</span>
+    {% endif %}
+  </dd>
+  <dt class="col-sm-3">Policy ACK</dt>
+  <dd class="col-sm-9">
+    {{ device.status.policy_ack_result|default:"—" }}
+    {% if device.status.applied_policy_version %}
+      — applied v{{ device.status.applied_policy_version }}
+    {% endif %}
+  </dd>
 </dl>
 {% if can_view_location %}
 <h2 class="h5 mt-4">Location</h2>
