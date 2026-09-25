@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import timedelta
+import json
 
 from django.conf import settings
 from django.db import transaction
@@ -38,6 +39,19 @@ def build_enrollment_payload(session: EnrollmentSession, raw_secret: str) -> dic
         "enrollment_session_id": str(session.id),
         "enrollment_secret": raw_secret,
     }
+
+
+def canonical_enrollment_payload_json(payload: dict) -> str:
+    """
+    Compact JSON bytes encoded into the enrollment QR and shown for paste.
+    Must stay byte-identical for QR and dashboard copy/paste fallback.
+    """
+    required = ("v", "api_base", "enrollment_session_id", "enrollment_secret")
+    missing = [key for key in required if key not in payload]
+    if missing:
+        raise EnrollmentError(f"Incomplete enrollment payload: {', '.join(missing)}", "invalid_payload")
+    ordered = {key: payload[key] for key in required}
+    return json.dumps(ordered, separators=(",", ":"), ensure_ascii=True)
 
 
 @transaction.atomic

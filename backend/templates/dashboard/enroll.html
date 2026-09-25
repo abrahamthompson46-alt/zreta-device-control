@@ -12,14 +12,21 @@
   <div class="card mb-4">
     <div class="card-body">
       <h2 class="h5">Waiting for device enrollment.</h2>
-      <p>Show this QR code or secret on the device during setup. It is displayed once and is not stored in plaintext.</p>
+      <p>Show this QR code on the device, or paste the JSON below into the Android app. The secret is displayed once and is not stored in plaintext.</p>
       <p><strong>Session ID:</strong> <code>{{ created_session.id }}</code></p>
       <p><strong>Expires:</strong> {{ created_session.expires_at }}</p>
       <p><strong>Provisioning modes:</strong> {{ created_session.allowed_provisioning_modes|join:", " }}</p>
       <p><strong>One-time secret:</strong></p>
       <div class="alert alert-secondary secret-box">{{ raw_secret }}</div>
-      <div class="qr-box mb-3">{{ qr_svg|safe }}</div>
-      <p class="small text-muted">QR payload contains only the API base URL, session ID, and this one-time secret. It does not contain parent credentials or long-lived API tokens.</p>
+      <div class="qr-box mb-3">
+        <img src="{{ qr_data_uri }}" alt="Enrollment QR code" width="320" height="320" />
+      </div>
+      <p class="small text-muted mb-2">
+        Scan with the Android app, or paste this exact JSON (identical to the QR payload).
+        It contains only the API base URL, session ID, and this one-time secret — not parent credentials or long-lived tokens.
+      </p>
+      <label class="form-label" for="enrollment-payload-json"><strong>Enrollment JSON</strong></label>
+      <textarea id="enrollment-payload-json" class="form-control secret-box mb-3" rows="4" readonly>{{ payload_json }}</textarea>
       <form method="post" action="{% url 'dashboard:enrollment_cancel' created_session.id %}">{% csrf_token %}
         <button class="btn btn-outline-danger btn-sm" type="submit">Cancel this session</button>
       </form>

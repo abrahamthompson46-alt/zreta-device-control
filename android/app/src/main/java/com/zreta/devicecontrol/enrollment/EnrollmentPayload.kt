@@ -21,10 +21,22 @@ data class EnrollmentPayload(
     companion object {
         private val json = Json { ignoreUnknownKeys = true }
 
+        /**
+         * Parse enrollment JSON from QR scan or paste.
+         * Strips BOM/whitespace only — does not loosen field or version checks.
+         */
         fun parse(raw: String): EnrollmentPayload {
-            val payload = json.decodeFromString(serializer(), raw.trim())
+            val normalized = normalizeRaw(raw)
+            val payload = json.decodeFromString(serializer(), normalized)
             require(payload.v == 1) { "Unsupported enrollment payload version" }
             return payload
+        }
+
+        internal fun normalizeRaw(raw: String): String {
+            return raw
+                .trim()
+                .trim('\uFEFF', '\u200B', '\u200C', '\u200D')
+                .trim()
         }
     }
 }

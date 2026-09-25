@@ -8,7 +8,7 @@ from django.views.generic import FormView, TemplateView
 from apps.accounts.mixins import OrganizationContextMixin
 from apps.audit.models import AuditEvent
 from apps.audit.services import request_meta
-from apps.devices.forms import EnrollmentCreateForm, enrollment_qr_svg
+from apps.devices.forms import EnrollmentCreateForm, enrollment_qr_data_uri
 from apps.devices.location import (
     latest_location,
     location_history,
@@ -19,6 +19,7 @@ from apps.devices.models import Device, EnrollmentSession, EnrollmentStatus
 from apps.devices.services import (
     EnrollmentError,
     cancel_enrollment_session,
+    canonical_enrollment_payload_json,
     create_enrollment_session,
     rename_device,
     revoke_device,
@@ -172,14 +173,16 @@ class EnrollDeviceView(OrganizationContextMixin, FormView):
             allowed_provisioning_modes=form.cleaned_data["allowed_provisioning_modes"],
             request_meta=request_meta(self.request),
         )
-        qr_svg = enrollment_qr_svg(created.payload)
+        qr_data_uri = enrollment_qr_data_uri(created.payload)
+        payload_json = canonical_enrollment_payload_json(created.payload)
         return self.render_to_response(
             self.get_context_data(
                 form=EnrollmentCreateForm(),
                 created_session=created.session,
                 raw_secret=created.raw_secret,
                 payload=created.payload,
-                qr_svg=qr_svg,
+                payload_json=payload_json,
+                qr_data_uri=qr_data_uri,
             )
         )
 

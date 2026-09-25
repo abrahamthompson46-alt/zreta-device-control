@@ -20,9 +20,23 @@ class EnrollmentPayloadTest {
         assertEquals("one-time", payload.enrollmentSecret)
     }
 
+    @Test
+    fun parseStripsBomAndWhitespace() {
+        val withBom = "\uFEFF  $sample  \n"
+        val payload = EnrollmentPayload.parse(withBom)
+        assertEquals("one-time", payload.enrollmentSecret)
+    }
+
     @Test(expected = Exception::class)
     fun rejectMissingFields() {
         EnrollmentPayload.parse("""{"v":1,"api_base":"http://x"}""")
+    }
+
+    @Test(expected = Exception::class)
+    fun rejectWrongVersion() {
+        EnrollmentPayload.parse(
+            """{"v":2,"api_base":"http://10.0.2.2:8000","enrollment_session_id":"11111111-1111-1111-1111-111111111111","enrollment_secret":"one-time"}""",
+        )
     }
 }
 

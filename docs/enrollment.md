@@ -3,7 +3,7 @@
 ## Parent (Phase 1)
 
 1. Owner/admin creates an `EnrollmentSession`.
-2. Dashboard shows a one-time secret and QR JSON (`v`, `api_base`, `enrollment_session_id`, `enrollment_secret`).
+2. Dashboard shows a one-time secret, a **PNG enrollment QR**, and the **exact canonical JSON** also encoded in that QR (`v`, `api_base`, `enrollment_session_id`, `enrollment_secret`). Paste and scan use the same bytes.
 3. Only HMAC-SHA256 of the secret is stored.
 
 ## Device (Phase 2)

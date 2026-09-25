@@ -1,2 +1,14 @@
-.qr-box svg { width: 220px; height: 220px; }
+.qr-box {
+  display: inline-block;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}
+.qr-box img {
+  display: block;
+  width: 320px;
+  height: 320px;
+  image-rendering: pixelated;
+}
 .secret-box { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-all; }
