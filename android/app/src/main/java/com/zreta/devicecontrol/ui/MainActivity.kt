@@ -9,6 +9,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.google.zxing.integration.android.IntentIntegrator
 import com.zreta.devicecontrol.api.DeviceApiClient
 import com.zreta.devicecontrol.auth.SecureCredentialStore
@@ -20,6 +23,8 @@ import com.zreta.devicecontrol.location.LocationDisclosureActivity
 import com.zreta.devicecontrol.location.LocationEligibility
 import com.zreta.devicecontrol.location.LocationWorker
 import com.zreta.devicecontrol.logging.SafeLog
+import com.zreta.devicecontrol.policy.PolicyWorker
+import com.zreta.devicecontrol.status.HeartbeatWorker
 import com.zreta.devicecontrol.status.StatusSnapshot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -59,9 +64,26 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        enqueueImmediateSync()
         refreshLocationFlag()
         refreshStatus()
         refreshVpnConsentButton()
+    }
+
+    /** TECNO and similar phones often delay the 15-minute workers. Opening the app checks in now. */
+    private fun enqueueImmediateSync() {
+        if (!SecureCredentialStore(this).isEnrolled()) return
+        val workManager = WorkManager.getInstance(this)
+        workManager.enqueueUniqueWork(
+            "zreta-heartbeat-now",
+            ExistingWorkPolicy.REPLACE,
+            OneTimeWorkRequestBuilder<HeartbeatWorker>().build(),
+        )
+        workManager.enqueueUniqueWork(
+            "zreta-policy-now",
+            ExistingWorkPolicy.REPLACE,
+            OneTimeWorkRequestBuilder<PolicyWorker>().build(),
+        )
     }
 
     private fun refreshVpnConsentButton() {
