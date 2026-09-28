@@ -98,6 +98,44 @@ def test_device_enroll_success(client, enrollment):
 
 
 @pytest.mark.django_db
+def test_ordinary_install_can_enroll_as_unmanaged(client, owner_bundle):
+    created = create_enrollment_session(
+        organization=owner_bundle["org"],
+        created_by=owner_bundle["user"],
+        allowed_provisioning_modes=["device_owner"],
+    )
+    _, pem = _ec_pair()
+    response = client.post(
+        "/api/v1/device/enroll",
+        _enroll_payload(created.session, created.raw_secret, pem, management_mode="unmanaged"),
+        content_type="application/json",
+    )
+    assert response.status_code == 201
+    assert response.json()["management_mode"] == "unmanaged"
+    created.session.refresh_from_db()
+    assert created.session.status == "consumed"
+
+
+@pytest.mark.django_db
+def test_claimed_device_owner_rejected_when_session_disallows_it(client, owner_bundle):
+    created = create_enrollment_session(
+        organization=owner_bundle["org"],
+        created_by=owner_bundle["user"],
+        allowed_provisioning_modes=["profile_owner"],
+    )
+    _, pem = _ec_pair()
+    response = client.post(
+        "/api/v1/device/enroll",
+        _enroll_payload(created.session, created.raw_secret, pem, management_mode="device_owner"),
+        content_type="application/json",
+    )
+    assert response.status_code == 400
+    assert response.json()["code"] == "invalid_mode"
+    created.session.refresh_from_db()
+    assert created.session.status == "pending"
+
+
+@pytest.mark.django_db
 def test_device_enroll_rejects_private_key_pem(client, enrollment):
     private_key = ec.generate_private_key(ec.SECP256R1())
     priv_pem = private_key.private_bytes(

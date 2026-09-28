@@ -35,6 +35,10 @@
         </activity>
 
         <activity
+            android:name=".ui.DisclosureActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".location.LocationDisclosureActivity"
             android:exported="false" />
 

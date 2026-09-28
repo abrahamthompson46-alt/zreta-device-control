@@ -14,6 +14,7 @@ import com.zreta.devicecontrol.api.DeviceApiClient
 import com.zreta.devicecontrol.auth.SecureCredentialStore
 import com.zreta.devicecontrol.databinding.ActivityMainBinding
 import com.zreta.devicecontrol.dpc.ZretaDeviceAdminReceiver
+import com.zreta.devicecontrol.enrollment.EnrollmentParseDiagnostic
 import com.zreta.devicecontrol.enrollment.EnrollmentPayload
 import com.zreta.devicecontrol.location.LocationDisclosureActivity
 import com.zreta.devicecontrol.location.LocationEligibility
@@ -142,13 +143,15 @@ class MainActivity : AppCompatActivity() {
     private fun openDisclosure(raw: String) {
         try {
             EnrollmentPayload.parse(raw)
-            startActivity(
-                Intent(this, DisclosureActivity::class.java)
-                    .putExtra(DisclosureActivity.EXTRA_PAYLOAD, raw),
-            )
         } catch (ex: Exception) {
-            SafeLog.w("Invalid enrollment payload")
-            Toast.makeText(this, "Invalid enrollment QR/JSON.", Toast.LENGTH_LONG).show()
+            val diagnostic = EnrollmentParseDiagnostic.format(raw, ex)
+            SafeLog.w(diagnostic)
+            Toast.makeText(this, diagnostic, Toast.LENGTH_LONG).show()
+            return
         }
+        startActivity(
+            Intent(this, DisclosureActivity::class.java)
+                .putExtra(DisclosureActivity.EXTRA_PAYLOAD, raw),
+        )
     }
 }

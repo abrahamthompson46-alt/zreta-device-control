@@ -32,6 +32,28 @@ class EnrollmentPayloadTest {
         EnrollmentPayload.parse("""{"v":1,"api_base":"http://x"}""")
     }
 
+    @Test
+    fun diagnosticOmitsEnrollmentSecretAndRawJson() {
+        val secret = "super-secret-token-value-abcXYZ_0123456789"
+        val raw = """{"v":1,"api_base":"https://control.zreta.com","enrollment_session_id":"11111111-1111-1111-1111-111111111111","enrollment_secret":"$secret"}"""
+        val leaked = IllegalArgumentException("Unexpected JSON token at offset 4: Expected start. JSON input: $raw")
+        val text = EnrollmentParseDiagnostic.format(raw, leaked)
+        assertTrue(text.contains("IllegalArgumentException"))
+        assertTrue(text.contains("rawLen=${raw.length}"))
+        assertFalse(text.contains(secret))
+        assertFalse(text.contains("enrollment_secret"))
+        assertFalse(text.contains(raw))
+        assertFalse(text.contains("control.zreta.com"))
+    }
+
+    @Test
+    fun diagnosticKeepsShortSafeReason() {
+        val raw = """{"v":2}"""
+        val text = EnrollmentParseDiagnostic.format(raw, IllegalArgumentException("Unsupported enrollment payload version"))
+        assertTrue(text.contains("Unsupported enrollment payload version"))
+        assertFalse(text.contains(raw))
+    }
+
     @Test(expected = Exception::class)
     fun rejectWrongVersion() {
         EnrollmentPayload.parse(

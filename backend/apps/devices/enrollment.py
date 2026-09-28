@@ -80,8 +80,10 @@ def enroll_android_device(
     _reject_if_unusable(session)
     if not secrets_match(raw_secret, session.token_hash):
         raise EnrollmentError("Invalid enrollment secret.", "invalid_secret")
+    # allowed_provisioning_modes limits claimed Device/Profile Owner setup.
+    # An ordinary install reports unmanaged and is still allowed to enroll.
     allowed = set(session.allowed_provisioning_modes or [])
-    if management_mode not in allowed:
+    if management_mode != ManagementMode.UNMANAGED and management_mode not in allowed:
         raise EnrollmentError("Provisioning mode is not allowed for this session.", "invalid_mode")
 
     session.status = "consumed"
