@@ -34,9 +34,12 @@ class PolicyComplianceActivity : Activity() {
             SafeLog.w("Policy compliance failed: ${evaluation.reason}")
             setResult(RESULT_CANCELED)
         }
-        startActivity(
-            Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
+        val launch = Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val extras = intent.getBundleExtra("android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE")
+        if (extras != null) {
+            launch.putExtra("android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE", extras)
+        }
+        startActivity(launch)
         finish()
     }
 }

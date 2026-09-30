@@ -17,20 +17,18 @@ class EnrollmentCreateForm(forms.Form):
     )
 
 
-def enrollment_qr_data_uri(payload: dict) -> str:
-    """
-    PNG data-URI QR encoding the canonical enrollment JSON.
-
-    Prefer PNG over stroke-based SVG: CSS-scaled SVG paths anti-alias poorly and
-    were unreliable for phone-camera scans of the dashboard QR on physical devices.
-    """
-    content = canonical_enrollment_payload_json(payload)
+def qr_png_data_uri(content: str) -> str:
+    """PNG data-URI QR. Solid black/white modules scan more reliably than stroke SVG."""
     qr = segno.make(content, error="m")
     buffer = BytesIO()
-    # scale=8 + border=4 → crisp modules; light fill gives explicit quiet zone contrast.
     qr.save(buffer, kind="png", scale=8, border=4, dark="#000000", light="#ffffff")
     encoded = base64.b64encode(buffer.getvalue()).decode("ascii")
     return f"data:image/png;base64,{encoded}"
+
+
+def enrollment_qr_data_uri(payload: dict) -> str:
+    """PNG data-URI QR encoding the canonical enrollment JSON."""
+    return qr_png_data_uri(canonical_enrollment_payload_json(payload))
 
 
 def enrollment_qr_svg(payload: dict) -> str:

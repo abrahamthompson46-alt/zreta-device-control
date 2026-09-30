@@ -84,6 +84,11 @@ class MainActivity : AppCompatActivity() {
             ExistingWorkPolicy.REPLACE,
             OneTimeWorkRequestBuilder<PolicyWorker>().build(),
         )
+        workManager.enqueueUniqueWork(
+            "zreta-location-now",
+            ExistingWorkPolicy.REPLACE,
+            OneTimeWorkRequestBuilder<LocationWorker>().build(),
+        )
     }
 
     private fun refreshVpnConsentButton() {

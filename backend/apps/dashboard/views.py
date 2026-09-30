@@ -9,6 +9,7 @@ from apps.accounts.mixins import OrganizationContextMixin
 from apps.audit.models import AuditEvent
 from apps.audit.services import request_meta
 from apps.devices.forms import EnrollmentCreateForm, enrollment_qr_data_uri
+from apps.devices.provisioning import build_device_owner_setup_qr
 from apps.devices.location import (
     latest_location,
     location_history,
@@ -175,6 +176,7 @@ class EnrollDeviceView(OrganizationContextMixin, FormView):
         )
         qr_data_uri = enrollment_qr_data_uri(created.payload)
         payload_json = canonical_enrollment_payload_json(created.payload)
+        setup_qr = build_device_owner_setup_qr(created.payload)
         return self.render_to_response(
             self.get_context_data(
                 form=EnrollmentCreateForm(),
@@ -183,6 +185,7 @@ class EnrollDeviceView(OrganizationContextMixin, FormView):
                 payload=created.payload,
                 payload_json=payload_json,
                 qr_data_uri=qr_data_uri,
+                setup_qr=setup_qr,
             )
         )
 

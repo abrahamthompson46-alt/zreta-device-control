@@ -27,6 +27,22 @@
       </p>
       <label class="form-label" for="enrollment-payload-json"><strong>Enrollment JSON</strong></label>
       <textarea id="enrollment-payload-json" class="form-control secret-box mb-3" rows="4" readonly>{{ payload_json }}</textarea>
+      <h2 class="h5 mt-4">Device Owner setup QR</h2>
+      {% if setup_qr %}
+      <p>
+        Use this QR only on the welcome screen after a factory reset. Tap the welcome screen six times, then scan.
+        The phone downloads the app from <code>{{ setup_qr.download_url }}</code> and becomes Device Owner before any Google account is added.
+        This QR also contains the one-time enrollment secret.
+      </p>
+      <div class="qr-box mb-3">
+        <img src="{{ setup_qr.qr_data_uri }}" alt="Device Owner setup QR code" width="360" height="360" />
+      </div>
+      {% else %}
+      <div class="alert alert-secondary">
+        The setup QR is unavailable because the server does not have the Device Owner APK yet.
+        Set <code>DPC_APK_PATH</code> to the APK file and create a new enrollment session.
+      </div>
+      {% endif %}
       <form method="post" action="{% url 'dashboard:enrollment_cancel' created_session.id %}">{% csrf_token %}
         <button class="btn btn-outline-danger btn-sm" type="submit">Cancel this session</button>
       </form>

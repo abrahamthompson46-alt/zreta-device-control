@@ -17,3 +17,7 @@
 7. WorkManager heartbeat every 15 minutes; token refresh via ES256 assertion (`POST /api/v1/device/token`). Replay of `jti` is rejected.
 
 **Product limitation:** an ordinary installation of the Android application on an already-configured phone does not make the phone Device Owner.
+
+## Device Owner setup QR
+
+Separate from the enrollment QR. After a factory reset, tap the welcome screen six times and scan the setup QR. Android downloads `GET /dpc.apk` (no login; the file contains no enrollment secret) and sets this app as Device Owner. The QR's admin extras carry the same one-time `api_base`, session id, and secret. The server computes signature and package checksums from `DPC_APK_PATH`. If that file is missing, the dashboard explains that the setup QR is unavailable.

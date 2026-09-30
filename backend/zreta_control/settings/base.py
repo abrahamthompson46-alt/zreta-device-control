@@ -149,6 +149,9 @@ REST_FRAMEWORK = {
 ENROLLMENT_TOKEN_PEPPER = env("ENROLLMENT_TOKEN_PEPPER", SECRET_KEY)
 ENROLLMENT_SESSION_TTL_MINUTES = int(env("ENROLLMENT_SESSION_TTL_MINUTES", "30") or "30")
 PUBLIC_API_BASE_URL = (env("PUBLIC_API_BASE_URL", "http://127.0.0.1:8000") or "http://127.0.0.1:8000").rstrip("/")
+# APK downloaded by a factory-reset phone during Device Owner QR setup. Public file, no secret.
+_default_dpc_apk = REPO_ROOT / "android" / "app" / "build" / "outputs" / "apk" / "debug" / "app-debug.apk"
+DPC_APK_PATH = env("DPC_APK_PATH", str(_default_dpc_apk) if _default_dpc_apk.is_file() else "") or ""
 
 # Device authentication (Phase 2). Access tokens are short-lived HS256 JWTs.
 # Long-term proof remains the Android Keystore key; the server stores only the public key.
