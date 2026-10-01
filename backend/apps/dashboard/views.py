@@ -301,6 +301,21 @@ class PolicyDetailView(OrganizationContextMixin, TemplateView):
         ctx["can_manage"] = self.request.membership.can_manage
         ctx["devices"] = Device.objects.filter(organization=self.request.organization).order_by("display_name")
         ctx["assignments"] = policy.device_assignments.select_related("device", "pinned_version")
+        from apps.policies.editor import editor_initial, policy_summary, requires_publish_confirmation
+        from apps.policies.schema import empty_policy_document
+
+        draft = policy.versions.filter(status=PolicyVersionStatus.DRAFT).order_by("-version_number").first()
+        source = draft or ctx["published"]
+        document = (source.document if source is not None else None) or empty_policy_document()
+        ctx["draft"] = draft
+        ctx["editor_initial"] = editor_initial(document)
+        ctx["editor_summary"] = policy_summary(document)
+        ctx["editor_needs_confirm"] = requires_publish_confirmation(document)
+        ctx["confirm_version_ids"] = [
+            version.id
+            for version in ctx["versions"]
+            if version.status == PolicyVersionStatus.DRAFT and requires_publish_confirmation(version.document)
+        ]
         return ctx
 
 
@@ -319,6 +334,14 @@ class PolicyPublishView(OrganizationContextMixin, TemplateView):
             policy_id=policy_id,
             organization=request.organization,
         )
+        from apps.policies.editor import requires_publish_confirmation
+
+        if requires_publish_confirmation(version.document) and request.POST.get("confirm_restrictive") != "yes":
+            messages.error(
+                request,
+                "Confirm the restrictive controls before publishing this version.",
+            )
+            return HttpResponseRedirect(reverse("dashboard:policy_detail", args=[policy_id]))
         try:
             publish_version(
                 organization=request.organization,
@@ -330,6 +353,76 @@ class PolicyPublishView(OrganizationContextMixin, TemplateView):
         except PolicyError as exc:
             messages.error(request, str(exc))
         return HttpResponseRedirect(reverse("dashboard:policy_detail", args=[policy_id]))
+
+
+class PolicyDraftSaveView(OrganizationContextMixin, TemplateView):
+    manage_required = True
+    http_method_names = ["post"]
+
+    def post(self, request, policy_id):
+        from apps.policies.editor import document_from_editor_post, requires_publish_confirmation
+        from apps.policies.exceptions import PolicyError
+        from apps.policies.lifecycle import create_draft_version, publish_version, update_draft_version
+        from apps.policies.models import Policy, PolicyVersion, PolicyVersionStatus
+
+        policy = get_object_or_404(Policy, pk=policy_id, organization=request.organization)
+        action = request.POST.get("action") or "save"
+        try:
+            document = document_from_editor_post(request.POST)
+        except PolicyError as exc:
+            messages.error(request, str(exc))
+            return HttpResponseRedirect(reverse("dashboard:policy_detail", args=[policy.id]))
+
+        try:
+            draft = (
+                PolicyVersion.objects.filter(
+                    policy=policy,
+                    organization=request.organization,
+                    status=PolicyVersionStatus.DRAFT,
+                )
+                .order_by("-version_number")
+                .first()
+            )
+            if draft is None:
+                draft = create_draft_version(
+                    organization=request.organization,
+                    policy_id=policy.id,
+                    actor_user=request.user,
+                    document=document,
+                    request_meta=request_meta(request),
+                )
+            else:
+                draft = update_draft_version(
+                    organization=request.organization,
+                    version_id=draft.id,
+                    document=document,
+                    actor_user=request.user,
+                )
+        except PolicyError as exc:
+            messages.error(request, str(exc))
+            return HttpResponseRedirect(reverse("dashboard:policy_detail", args=[policy.id]))
+
+        if action == "publish" and requires_publish_confirmation(document) and request.POST.get("confirm_restrictive") != "yes":
+            messages.error(
+                request,
+                "Draft saved. Confirm the restrictive controls in the review section before publishing.",
+            )
+            return HttpResponseRedirect(reverse("dashboard:policy_detail", args=[policy.id]))
+
+        if action == "publish":
+            try:
+                published = publish_version(
+                    organization=request.organization,
+                    version_id=draft.id,
+                    actor_user=request.user,
+                    request_meta=request_meta(request),
+                )
+                messages.success(request, f"Published version {published.version_number}.")
+            except PolicyError as exc:
+                messages.error(request, str(exc))
+        else:
+            messages.success(request, f"Saved draft version {draft.version_number}.")
+        return HttpResponseRedirect(reverse("dashboard:policy_detail", args=[policy.id]))
 
 
 class PolicyAssignView(OrganizationContextMixin, TemplateView):

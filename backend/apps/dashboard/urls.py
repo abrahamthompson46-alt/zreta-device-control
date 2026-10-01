@@ -30,6 +30,7 @@ urlpatterns = [
     path("policies/", views.PolicyListView.as_view(), name="policies"),
     path("policies/create/", views.PolicyCreateView.as_view(), name="policy_create"),
     path("policies/<uuid:policy_id>/", views.PolicyDetailView.as_view(), name="policy_detail"),
+    path("policies/<uuid:policy_id>/draft/", views.PolicyDraftSaveView.as_view(), name="policy_draft_save"),
     path(
         "policies/<uuid:policy_id>/versions/<uuid:version_id>/publish/",
         views.PolicyPublishView.as_view(),
