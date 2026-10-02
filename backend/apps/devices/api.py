@@ -262,3 +262,34 @@ class DeviceLocationHistoryAPIView(OrganizationAPIMixin, APIView):
                 "results": [serialize_location(record) for record in records],
             }
         )
+
+
+class DeviceInstalledAppsAPIView(OrganizationAPIMixin, APIView):
+    """Read installed applications. Viewers may read this. Location remains owner/admin only."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, device_id):
+        from apps.devices.models import InstalledApplication
+
+        device = org_device(self.organization, device_id)
+        rows = InstalledApplication.objects.filter(device=device, organization=self.organization).order_by(
+            "package_name"
+        )
+        return Response(
+            {
+                "device_id": str(device.id),
+                "apps": [
+                    {
+                        "package_name": row.package_name,
+                        "label": row.label,
+                        "version_name": row.version_name,
+                        "version_code": row.version_code,
+                        "first_seen": row.first_seen,
+                        "last_reported": row.last_reported,
+                        "removed_at": row.removed_at,
+                    }
+                    for row in rows
+                ],
+            }
+        )

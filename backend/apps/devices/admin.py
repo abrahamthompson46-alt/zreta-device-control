@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Device, DeviceCredential, DeviceStatus, EnrollmentSession, LocationRecord
+from .models import Device, DeviceCredential, DeviceStatus, EnrollmentSession, InstalledApplication, LocationRecord
 
 
 @admin.register(Device)
@@ -28,3 +28,10 @@ class DeviceStatusAdmin(admin.ModelAdmin):
 class LocationRecordAdmin(admin.ModelAdmin):
     list_display = ("id", "device", "captured_at", "source", "is_mock")
     readonly_fields = ("latitude", "longitude", "accuracy_m", "client_event_id")
+
+
+@admin.register(InstalledApplication)
+class InstalledApplicationAdmin(admin.ModelAdmin):
+    list_display = ("package_name", "device", "version_code", "removed_at")
+    search_fields = ("package_name",)
+    raw_id_fields = ("device", "organization")

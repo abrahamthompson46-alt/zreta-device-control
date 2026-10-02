@@ -34,6 +34,11 @@ urlpatterns = [
         api.DeviceLocationHistoryAPIView.as_view(),
         name="api-device-location-history",
     ),
+    path(
+        "devices/<uuid:device_id>/installed-apps",
+        api.DeviceInstalledAppsAPIView.as_view(),
+        name="api-device-installed-apps",
+    ),
     path("device/enroll", device_api.DeviceEnrollAPIView.as_view(), name="api-device-enroll"),
     path("device/token", device_api.DeviceTokenAPIView.as_view(), name="api-device-token"),
     path("device/heartbeat", device_api.DeviceHeartbeatAPIView.as_view(), name="api-device-heartbeat"),
@@ -42,4 +47,9 @@ urlpatterns = [
     path("device/policy", device_api.DevicePolicyAPIView.as_view(), name="api-device-policy"),
     path("device/policy/ack", device_api.DevicePolicyAckAPIView.as_view(), name="api-device-policy-ack"),
     path("device/fcm-token", device_api.DeviceFcmTokenAPIView.as_view(), name="api-device-fcm-token"),
+    path(
+        "device/installed-apps",
+        device_api.DeviceInstalledAppsAPIView.as_view(),
+        name="api-device-installed-apps-upload",
+    ),
 ]

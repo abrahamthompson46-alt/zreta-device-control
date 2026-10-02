@@ -19,6 +19,7 @@ import com.zreta.devicecontrol.databinding.ActivityMainBinding
 import com.zreta.devicecontrol.dpc.ZretaDeviceAdminReceiver
 import com.zreta.devicecontrol.enrollment.EnrollmentParseDiagnostic
 import com.zreta.devicecontrol.enrollment.EnrollmentPayload
+import com.zreta.devicecontrol.inventory.InventoryWorker
 import com.zreta.devicecontrol.location.LocationDisclosureActivity
 import com.zreta.devicecontrol.location.LocationEligibility
 import com.zreta.devicecontrol.location.LocationWorker
@@ -88,6 +89,11 @@ class MainActivity : AppCompatActivity() {
             "zreta-location-now",
             ExistingWorkPolicy.REPLACE,
             OneTimeWorkRequestBuilder<LocationWorker>().build(),
+        )
+        workManager.enqueueUniqueWork(
+            "zreta-inventory-now",
+            ExistingWorkPolicy.REPLACE,
+            OneTimeWorkRequestBuilder<InventoryWorker>().build(),
         )
     }
 

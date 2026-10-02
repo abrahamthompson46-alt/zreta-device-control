@@ -255,3 +255,20 @@ class DeviceFcmTokenAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response({"ok": True, "registered": True})
+
+
+class DeviceInstalledAppsAPIView(APIView):
+    """Device-authenticated installed-app snapshot. Ownership is the JWT device only."""
+
+    authentication_classes = [DeviceJWTAuthentication]
+    permission_classes = [IsEnrolledDevice]
+
+    def post(self, request):
+        from apps.devices.inventory import InventoryError, parse_inventory_apps, replace_installed_inventory
+
+        try:
+            apps, complete = parse_inventory_apps(request.data)
+            result = replace_installed_inventory(device=request.user.device, apps=apps, complete=complete)
+        except InventoryError as exc:
+            return Response({"detail": str(exc), "code": exc.code}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(result)

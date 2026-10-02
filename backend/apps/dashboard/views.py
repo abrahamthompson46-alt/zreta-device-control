@@ -70,6 +70,30 @@ class DeviceDetailView(OrganizationContextMixin, TemplateView):
         )
         ctx["device"] = device
         ctx["can_view_location"] = self.request.membership.can_manage
+        from datetime import timedelta
+
+        from apps.devices.models import InstalledApplication
+        from apps.devices.presence import presence_from_last_seen
+        from apps.policies.assignments import resolve_effective_version
+        from apps.policies.models import DevicePolicyAssignment
+
+        status = getattr(device, "status", None)
+        ctx["presence"] = presence_from_last_seen(
+            status.last_seen_at if status else None,
+            window=timedelta(minutes=20),
+        )
+        assignment = (
+            DevicePolicyAssignment.objects.filter(device=device, organization=device.organization)
+            .select_related("policy", "pinned_version")
+            .first()
+        )
+        effective = resolve_effective_version(assignment) if assignment else None
+        ctx["assigned_policy_version"] = effective.version_number if effective else None
+        ctx["installed_apps"] = InstalledApplication.objects.filter(
+            device=device,
+            organization=device.organization,
+            removed_at__isnull=True,
+        ).order_by("label", "package_name")
         if ctx["can_view_location"]:
             latest = latest_location(device)
             ctx["latest_location"] = serialize_location(latest)

@@ -12,9 +12,15 @@
 <dl class="row">
   <dt class="col-sm-3">Management mode</dt><dd class="col-sm-9">{{ device.management_mode }}</dd>
   <dt class="col-sm-3">Manufacturer / model</dt><dd class="col-sm-9">{{ device.manufacturer|default:"—" }} {{ device.model }}</dd>
+  <dt class="col-sm-3">Android version</dt><dd class="col-sm-9">{{ device.android_version|default:"—" }}</dd>
+  <dt class="col-sm-3">DPC version</dt><dd class="col-sm-9">{{ device.dpc_version|default:"—" }}</dd>
+  <dt class="col-sm-3">Battery</dt><dd class="col-sm-9">{% if device.status.battery_level != None %}{{ device.status.battery_level }}%{% else %}—{% endif %}</dd>
   <dt class="col-sm-3">Last seen</dt><dd class="col-sm-9">{{ device.status.last_seen_at|default:"Never" }}</dd>
+  <dt class="col-sm-3">Presence</dt><dd class="col-sm-9">{{ presence }}</dd>
   <dt class="col-sm-3">Connectivity</dt><dd class="col-sm-9">{{ device.status.connectivity }}</dd>
   <dt class="col-sm-3">Management active</dt><dd class="col-sm-9">{{ device.status.management_active }}</dd>
+  <dt class="col-sm-3">Assigned policy</dt><dd class="col-sm-9">{% if assigned_policy_version %}v{{ assigned_policy_version }}{% else %}—{% endif %}</dd>
+  <dt class="col-sm-3">Applied policy</dt><dd class="col-sm-9">{% if device.status.applied_policy_version %}v{{ device.status.applied_policy_version }}{% else %}—{% endif %}</dd>
   <dt class="col-sm-3">DNS filter</dt>
   <dd class="col-sm-9">
     {{ device.status.dns_filter_state|default:"unknown" }}
@@ -30,6 +36,25 @@
     {% endif %}
   </dd>
 </dl>
+<h2 class="h5 mt-4">Installed applications</h2>
+<p class="small text-muted">Package name, label, and version last reported by this device. Applications that disappear from a later report stay in history and are hidden here.</p>
+{% if installed_apps %}
+<table class="table table-sm bg-white">
+  <thead><tr><th>Label</th><th>Package</th><th>Version</th><th>Last reported</th></tr></thead>
+  <tbody>
+  {% for app in installed_apps %}
+    <tr>
+      <td>{{ app.label }}</td>
+      <td><code>{{ app.package_name }}</code></td>
+      <td>{{ app.version_name|default:"—" }} ({{ app.version_code }})</td>
+      <td>{{ app.last_reported }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="text-muted">No installed applications have been reported yet.</p>
+{% endif %}
 {% if can_view_location %}
 <h2 class="h5 mt-4">Location</h2>
 <p>Collection: <strong>{% if device.location_collection_enabled %}enabled{% else %}disabled{% endif %}</strong></p>

@@ -215,6 +215,40 @@ class DeviceStatus(models.Model):
         return f"Status for {self.device_id}"
 
 
+class InstalledApplication(models.Model):
+    """Last reported installed package for one device. Rows are retained after removal."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        "accounts.Organization",
+        on_delete=models.CASCADE,
+        related_name="installed_applications",
+    )
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="installed_applications")
+    package_name = models.CharField(max_length=255)
+    label = models.CharField(max_length=150)
+    version_name = models.CharField(max_length=64, blank=True, default="")
+    version_code = models.BigIntegerField()
+    first_seen = models.DateTimeField()
+    last_reported = models.DateTimeField()
+    removed_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ["package_name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["device", "package_name"],
+                name="uniq_device_installed_package",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["organization", "device"], name="inst_app_org_device_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.package_name} ({self.device_id})"
+
+
 class LocationRecord(models.Model):
     """Append-oriented location fix. Coordinates must never be written to audit snapshots or logs."""
 

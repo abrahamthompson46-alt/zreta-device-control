@@ -157,6 +157,11 @@ class DeviceApiClient(
         return postJson(apiBase, "/api/v1/device/fcm-token", body, bearer = accessToken)
     }
 
+    fun uploadInstalledApps(apiBase: String, accessToken: String, body: JSONObject): JSONObject {
+        SafeLog.i("POST /api/v1/device/installed-apps count=${body.optJSONArray("apps")?.length() ?: 0}")
+        return postJson(apiBase, "/api/v1/device/installed-apps", body, bearer = accessToken)
+    }
+
     private fun postJson(apiBase: String, path: String, body: JSONObject, bearer: String?): JSONObject {
         val builder = Request.Builder()
             .url(join(apiBase, path))
