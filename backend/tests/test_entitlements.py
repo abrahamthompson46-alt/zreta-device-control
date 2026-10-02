@@ -3,9 +3,12 @@ from __future__ import annotations
 from datetime import timedelta
 
 import pytest
+from django.contrib.admin.sites import AdminSite
+from django.test import RequestFactory
 from django.utils import timezone
 
 from apps.audit.models import AuditEvent
+from apps.billing.admin import EntitlementOverrideAdmin, PaymentAdmin, PlanAdmin, SubscriptionAdmin
 from apps.billing.catalog import FEATURE_CATALOG
 from apps.billing.models import EntitlementOverride, Feature, OverrideEffect, Payment, Plan, Subscription, SubscriptionStatus
 from apps.billing.providers import PaymentProviderError, get_provider, record_payment_status
@@ -179,3 +182,66 @@ def test_override_precedence(owner_bundle):
     baseline = require_entitlement(org, feature.key)
     assert baseline.allowed is False
     assert baseline.source == "plan"
+
+
+def _staff_in_two_organizations(password):
+    from apps.accounts.models import Membership, MembershipRole, Organization, User
+
+    older = Organization.objects.create(name="Older Family")
+    current = Organization.objects.create(name="Current Family")
+    staff = User.objects.create_user(email="billing-staff@example.com", password=password, is_staff=True)
+    first = Membership.objects.create(user=staff, organization=older, role=MembershipRole.OWNER)
+    Membership.objects.create(user=staff, organization=current, role=MembershipRole.ADMIN)
+    Membership.objects.filter(pk=first.pk).update(created_at=timezone.now() - timedelta(days=30))
+    return staff, older, current
+
+
+def _admin_request(user):
+    request = RequestFactory().post("/admin/")
+    request.user = user
+    return request
+
+
+def test_admin_audit_uses_the_saved_organization_not_the_oldest_membership(password):
+    staff, older, current = _staff_in_two_organizations(password)
+    request = _admin_request(staff)
+
+    subscription = Subscription.objects.get(organization=current)
+    subscription.status = SubscriptionStatus.PAST_DUE
+    SubscriptionAdmin(Subscription, AdminSite()).save_model(request, subscription, None, True)
+    assert AuditEvent.objects.filter(action="subscription.changed", organization=current).exists()
+    assert not AuditEvent.objects.filter(action="subscription.changed", organization=older).exists()
+
+    feature = Feature.objects.get(key="device.enroll")
+    EntitlementOverrideAdmin(EntitlementOverride, AdminSite()).save_model(
+        request,
+        EntitlementOverride(organization=current, feature=feature, effect=OverrideEffect.DENY),
+        None,
+        False,
+    )
+    assert AuditEvent.objects.filter(action="entitlement.override_changed", organization=current).exists()
+    assert not AuditEvent.objects.filter(action="entitlement.override_changed", organization=older).exists()
+
+    payment = Payment.objects.create(
+        organization=current,
+        provider="manual",
+        provider_reference="audit-org-a",
+        currency="GHS",
+        amount_minor=100,
+    )
+    payment.status = "succeeded"
+    PaymentAdmin(Payment, AdminSite()).save_model(request, payment, None, True)
+    assert AuditEvent.objects.filter(action="payment.status_changed", organization=current).exists()
+    assert not AuditEvent.objects.filter(action="payment.status_changed", organization=older).exists()
+
+
+def test_plan_catalog_save_does_not_invent_an_organization(password):
+    staff, older, current = _staff_in_two_organizations(password)
+    plan = Plan.objects.get(is_default=True)
+    plan.description = "Catalog copy"
+    before = set(AuditEvent.objects.values_list("pk", flat=True))
+    PlanAdmin(Plan, AdminSite()).save_model(_admin_request(staff), plan, None, True)
+    created = AuditEvent.objects.exclude(pk__in=before)
+    assert not created.filter(organization=older).exists()
+    assert not created.filter(organization=current).exists()
+    assert not created.filter(action="plan.changed").exists()

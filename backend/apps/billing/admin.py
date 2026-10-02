@@ -1,6 +1,5 @@
 from django.contrib import admin
 
-from apps.accounts.models import Membership
 from apps.audit.services import record_audit, request_meta
 from apps.billing.models import (
     EntitlementOverride,
@@ -11,12 +10,7 @@ from apps.billing.models import (
     PlanPrice,
     Subscription,
 )
-from apps.billing.services import record_payment_status_change, record_plan_change, record_subscription_change
-
-
-def _staff_organization(user):
-    membership = Membership.objects.filter(user=user).select_related("organization").order_by("created_at").first()
-    return membership.organization if membership else None
+from apps.billing.services import record_payment_status_change, record_subscription_change
 
 
 class PlanPriceInline(admin.TabularInline):
@@ -46,23 +40,9 @@ class PlanAdmin(admin.ModelAdmin):
     autocomplete_fields = ()
 
     def save_model(self, request, obj, form, change):
-        old = None
-        if change and obj.pk:
-            previous = Plan.objects.filter(pk=obj.pk).first()
-            if previous is not None:
-                old = {"code": previous.code, "name": previous.name, "is_default": previous.is_default, "is_active": previous.is_active}
         super().save_model(request, obj, form, change)
-        organization = _staff_organization(request.user)
-        if organization is None:
-            return
-        record_plan_change(
-            organization=organization,
-            actor_user=request.user,
-            plan=obj,
-            old_snapshot=old,
-            new_snapshot={"code": obj.code, "name": obj.name, "is_default": obj.is_default, "is_active": obj.is_active},
-            request_meta=request_meta(request),
-        )
+        # A plan is global catalog data. It has no organization, and AuditEvent
+        # requires one. Do not attribute this change to a staff user's membership.
 
 
 @admin.register(Subscription)
