@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.devices.apps.DevicesConfig",
     "apps.policies.apps.PoliciesConfig",
     "apps.audit.apps.AuditConfig",
+    "apps.billing.apps.BillingConfig",
     "apps.dashboard.apps.DashboardConfig",
 ]
 
