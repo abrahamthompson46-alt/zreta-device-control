@@ -16,6 +16,7 @@ urlpatterns = [
     path("devices/<uuid:device_id>/", views.DeviceDetailView.as_view(), name="device_detail"),
     path("devices/<uuid:device_id>/rename/", views.DeviceRenameView.as_view(), name="device_rename"),
     path("devices/<uuid:device_id>/revoke/", views.DeviceRevokeView.as_view(), name="device_revoke"),
+    path("devices/<uuid:device_id>/delete/", views.DeviceDeleteView.as_view(), name="device_delete"),
     path(
         "devices/<uuid:device_id>/location/enable/",
         views.DeviceLocationEnableView.as_view(),

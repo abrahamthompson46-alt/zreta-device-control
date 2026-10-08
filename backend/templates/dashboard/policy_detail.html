@@ -2,23 +2,25 @@
 {% block title %}{{ policy.name }}{% endblock %}
 {% block content %}
 <p><a href="{% url 'dashboard:policies' %}">&larr; Policies</a></p>
+<p class="page-kicker">Policy controls</p>
 <h1 class="h3">{{ policy.name }}</h1>
 <p class="text-muted">{{ policy.description|default:"No description." }}</p>
 
 {% if published %}
-<div class="alert alert-success">Current published version: v{{ published.version_number }} ({{ published.content_hash }})</div>
+<div class="alert alert-success">Current published version: v{{ published.version_number }} <span class="small">({{ published.content_hash }})</span></div>
 {% else %}
 <div class="alert alert-secondary">No published version yet. Devices will not receive a document until you publish a draft.</div>
 {% endif %}
 
-<h2 class="h5 mt-4">Policy controls</h2>
 <p class="text-muted">These controls match the policy document the phone already enforces. An empty section is left out of the document. Unchecked restrictions are removed the next time the phone applies the published version. Applied means the phone enforced the document, not that the file was only downloaded.</p>
 
 {% if can_manage %}
 <form method="post" action="{% url 'dashboard:policy_draft_save' policy.id %}" class="mb-4">
   {% csrf_token %}
+  <div class="row g-4">
+    <div class="col-lg-8">
 
-  <section class="card mb-3">
+  <section class="card zreta-card mb-3">
     <div class="card-body">
       <h3 class="h6">Applications</h3>
       <p class="small text-muted">Device Owner only. One Android package name per line, such as <code>com.example.game</code>. System packages and the Zreta app itself are skipped by the phone.</p>
@@ -31,62 +33,95 @@
     </div>
   </section>
 
-  <section class="card mb-3">
+  <section class="card zreta-card mb-3">
     <div class="card-body">
       <h3 class="h6">Camera and device</h3>
       <p class="small text-muted">Device Owner only. Unchecked means the restriction is not in the policy, so a later publish clears it on the phone.</p>
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="camera_disabled" name="camera_disabled" value="yes" {% if editor_initial.camera_disabled %}checked{% endif %}>
-        <label class="form-check-label" for="camera_disabled">Disable the camera</label>
+      <div class="control-row">
+        <div>
+          <label class="form-check-label" for="camera_disabled">Disable the camera</label>
+          <p class="control-hint">Uses Device Owner camera disable. Some phones may still ignore it.</p>
+        </div>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" role="switch" id="camera_disabled" name="camera_disabled" value="yes" {% if editor_initial.camera_disabled %}checked{% endif %}>
+        </div>
       </div>
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="screen_capture_disabled" name="screen_capture_disabled" value="yes" {% if editor_initial.screen_capture_disabled %}checked{% endif %}>
-        <label class="form-check-label" for="screen_capture_disabled">Disable screenshots and screen capture</label>
+      <div class="control-row">
+        <div>
+          <label class="form-check-label" for="screen_capture_disabled">Disable screenshots and screen capture</label>
+        </div>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" role="switch" id="screen_capture_disabled" name="screen_capture_disabled" value="yes" {% if editor_initial.screen_capture_disabled %}checked{% endif %}>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="card mb-3">
+  <section class="card zreta-card mb-3">
     <div class="card-body">
       <h3 class="h6">Calls and messaging</h3>
       <p class="small text-muted">Device Owner only. These block every outgoing call or every SMS. They do not block one phone number, and they do not read or record calls or messages.</p>
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="block_outgoing_calls" name="block_outgoing_calls" value="yes" {% if editor_initial.block_outgoing_calls %}checked{% endif %}>
-        <label class="form-check-label" for="block_outgoing_calls">Block all outgoing calls</label>
+      <div class="control-row">
+        <div>
+          <label class="form-check-label" for="block_outgoing_calls">Block all outgoing calls</label>
+        </div>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" role="switch" id="block_outgoing_calls" name="block_outgoing_calls" value="yes" {% if editor_initial.block_outgoing_calls %}checked{% endif %}>
+        </div>
       </div>
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="block_sms" name="block_sms" value="yes" {% if editor_initial.block_sms %}checked{% endif %}>
-        <label class="form-check-label" for="block_sms">Block all SMS</label>
+      <div class="control-row">
+        <div>
+          <label class="form-check-label" for="block_sms">Block all SMS</label>
+        </div>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" role="switch" id="block_sms" name="block_sms" value="yes" {% if editor_initial.block_sms %}checked{% endif %}>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="card mb-3">
+  <section class="card zreta-card mb-3">
     <div class="card-body">
       <h3 class="h6">Internet</h3>
       <p class="small text-muted">Configuration locks stop the person from changing those settings. They do not, by themselves, switch Wi-Fi or mobile data off. The domain list is a local DNS blocklist: classic UDP DNS only, not always-on, and it fails open when the filter VPN is down.</p>
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="disallow_config_wifi" name="disallow_config_wifi" value="yes" {% if editor_initial.disallow_config_wifi %}checked{% endif %}>
-        <label class="form-check-label" for="disallow_config_wifi">Lock Wi-Fi configuration</label>
+      <div class="control-row">
+        <div>
+          <label class="form-check-label" for="disallow_config_wifi">Lock Wi-Fi configuration</label>
+        </div>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" role="switch" id="disallow_config_wifi" name="disallow_config_wifi" value="yes" {% if editor_initial.disallow_config_wifi %}checked{% endif %}>
+        </div>
       </div>
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="disallow_config_mobile_networks" name="disallow_config_mobile_networks" value="yes" {% if editor_initial.disallow_config_mobile_networks %}checked{% endif %}>
-        <label class="form-check-label" for="disallow_config_mobile_networks">Lock mobile-network configuration</label>
+      <div class="control-row">
+        <div>
+          <label class="form-check-label" for="disallow_config_mobile_networks">Lock mobile-network configuration</label>
+        </div>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" role="switch" id="disallow_config_mobile_networks" name="disallow_config_mobile_networks" value="yes" {% if editor_initial.disallow_config_mobile_networks %}checked{% endif %}>
+        </div>
       </div>
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="disallow_config_tethering" name="disallow_config_tethering" value="yes" {% if editor_initial.disallow_config_tethering %}checked{% endif %}>
-        <label class="form-check-label" for="disallow_config_tethering">Lock tethering configuration</label>
+      <div class="control-row">
+        <div>
+          <label class="form-check-label" for="disallow_config_tethering">Lock tethering configuration</label>
+        </div>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" role="switch" id="disallow_config_tethering" name="disallow_config_tethering" value="yes" {% if editor_initial.disallow_config_tethering %}checked{% endif %}>
+        </div>
       </div>
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="disallow_config_vpn" name="disallow_config_vpn" value="yes" {% if editor_initial.disallow_config_vpn %}checked{% endif %}>
-        <label class="form-check-label" for="disallow_config_vpn">Lock VPN configuration</label>
+      <div class="control-row">
+        <div>
+          <label class="form-check-label" for="disallow_config_vpn">Lock VPN configuration</label>
+        </div>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" role="switch" id="disallow_config_vpn" name="disallow_config_vpn" value="yes" {% if editor_initial.disallow_config_vpn %}checked{% endif %}>
+        </div>
       </div>
       <label class="form-label mt-2" for="blocked_domains">Blocked domains</label>
       <textarea class="form-control" id="blocked_domains" name="blocked_domains" rows="4" placeholder="example.com">{{ editor_initial.blocked_domains }}</textarea>
     </div>
   </section>
 
-  <section class="card mb-3">
+  <section class="card zreta-card mb-3">
     <div class="card-body">
       <h3 class="h6">Screen time</h3>
       <p class="small text-muted">One local bedtime window. The end time is exclusive. This is not a daily minute limit. The phone checks the window when it applies policy, which can be delayed.</p>
@@ -100,30 +135,40 @@
           <input class="form-control" type="time" id="bedtime_end" name="bedtime_end" value="{{ editor_initial.bedtime_end }}">
         </div>
       </div>
-      <div class="form-check mt-2">
-        <input class="form-check-input" type="checkbox" id="bedtime_block_outgoing_calls" name="bedtime_block_outgoing_calls" value="yes" {% if editor_initial.bedtime_block_outgoing_calls %}checked{% endif %}>
-        <label class="form-check-label" for="bedtime_block_outgoing_calls">Block all outgoing calls during bedtime</label>
+      <div class="control-row mt-2">
+        <div>
+          <label class="form-check-label" for="bedtime_block_outgoing_calls">Block all outgoing calls during bedtime</label>
+        </div>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" role="switch" id="bedtime_block_outgoing_calls" name="bedtime_block_outgoing_calls" value="yes" {% if editor_initial.bedtime_block_outgoing_calls %}checked{% endif %}>
+        </div>
       </div>
       <label class="form-label mt-2" for="bedtime_suspend_packages">Suspend these apps during bedtime</label>
       <textarea class="form-control" id="bedtime_suspend_packages" name="bedtime_suspend_packages" rows="3">{{ editor_initial.bedtime_suspend_packages }}</textarea>
     </div>
   </section>
 
-  <section class="card mb-3">
+  <section class="card zreta-card mb-3">
     <div class="card-body">
       <h3 class="h6">Location</h3>
       <p class="small text-muted">This checkbox records <code>location.collection_desired</code> only. It does not turn GPS on. Collection still requires the location switch on the device page, the phone disclosure, and Android permission.</p>
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="collection_desired" name="collection_desired" value="yes" {% if editor_initial.collection_desired %}checked{% endif %}>
-        <label class="form-check-label" for="collection_desired">Record that location collection is desired</label>
+      <div class="control-row">
+        <div>
+          <label class="form-check-label" for="collection_desired">Record that location collection is desired</label>
+        </div>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" role="switch" id="collection_desired" name="collection_desired" value="yes" {% if editor_initial.collection_desired %}checked{% endif %}>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="card mb-3 border-primary">
+    </div>
+    <div class="col-lg-4">
+  <section class="card zreta-card border-primary policy-sticky">
     <div class="card-body">
       <h3 class="h6">Review before publish</h3>
-      <p>Saving a draft does not send anything to phones. Publishing replaces the current published version. Assigned devices pull the new document and enforce it.</p>
+      <p class="small">Saving a draft does not send anything to phones. Publishing replaces the current published version. Assigned devices pull the new document and enforce it.</p>
       <ul class="mb-3">
         {% for line in editor_summary %}
         <li>{{ line }}</li>
@@ -135,13 +180,17 @@
         <label class="form-check-label" for="confirm_restrictive">I understand these restrictions will be enforced on assigned Device Owner phones after publish.</label>
       </div>
       {% endif %}
-      <button class="btn btn-outline-primary" type="submit" name="action" value="save">Save draft</button>
-      <button class="btn btn-primary" type="submit" name="action" value="publish">Publish</button>
+      <div class="d-grid gap-2">
+        <button class="btn btn-outline-primary" type="submit" name="action" value="save">Save draft</button>
+        <button class="btn btn-primary" type="submit" name="action" value="publish">Publish</button>
+      </div>
     </div>
   </section>
+    </div>
+  </div>
 </form>
 {% else %}
-<section class="card mb-4">
+<section class="card zreta-card mb-4">
   <div class="card-body">
     <h3 class="h6">Review</h3>
     <ul class="mb-0">
@@ -154,7 +203,7 @@
 {% endif %}
 
 <h2 class="h5 mt-4">Versions</h2>
-<table class="table table-sm bg-white">
+<table class="table table-sm zreta-table">
   <thead><tr><th>#</th><th>Status</th><th>Hash</th><th>Created</th><th></th></tr></thead>
   <tbody>
   {% for version in versions %}
@@ -184,7 +233,7 @@
 <p class="small text-muted">The editor publishes the controls shown in the review. This table publishes the draft already saved. A restrictive saved draft requires its own confirmation checkbox.</p>
 
 <h2 class="h5 mt-4">Assignments</h2>
-<table class="table table-sm bg-white">
+<table class="table table-sm zreta-table">
   <thead><tr><th>Device</th><th>Pinned version</th></tr></thead>
   <tbody>
   {% for assignment in assignments %}
@@ -199,15 +248,16 @@
 </table>
 
 {% if can_manage %}
-<form method="post" action="{% url 'dashboard:policy_assign' policy.id %}" class="card card-body mt-3">
+<form method="post" action="{% url 'dashboard:policy_assign' policy.id %}" class="card zreta-card card-body mt-3">
   {% csrf_token %}
   <h2 class="h6">Assign to device</h2>
+  <p class="small text-muted">Only active devices are listed. Assign the published policy that this phone should enforce.</p>
   <div class="row g-2">
     <div class="col-md-8">
       <select class="form-select" name="device_id" required>
         <option value="">Select device…</option>
         {% for device in devices %}
-          <option value="{{ device.id }}">{{ device.display_name }}</option>
+          <option value="{{ device.id }}">{{ device.display_name }} ({{ device.management_mode }})</option>
         {% endfor %}
       </select>
     </div>

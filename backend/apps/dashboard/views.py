@@ -22,6 +22,7 @@ from apps.devices.services import (
     cancel_enrollment_session,
     canonical_enrollment_payload_json,
     create_enrollment_session,
+    delete_device,
     rename_device,
     revoke_device,
 )
@@ -54,7 +55,10 @@ class DeviceListView(OrganizationContextMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["devices"] = Device.objects.filter(organization=self.request.organization).select_related("status")
+        ctx["devices"] = (
+            Device.objects.filter(organization=self.request.organization)
+            .select_related("status", "policy_assignment", "policy_assignment__policy")
+        )
         return ctx
 
 
@@ -88,7 +92,14 @@ class DeviceDetailView(OrganizationContextMixin, TemplateView):
             .first()
         )
         effective = resolve_effective_version(assignment) if assignment else None
+        applied_version = status.applied_policy_version if status else None
+        ctx["assigned_policy"] = assignment.policy if assignment else None
         ctx["assigned_policy_version"] = effective.version_number if effective else None
+        ctx["policy_out_of_date"] = (
+            effective is not None
+            and applied_version is not None
+            and applied_version != effective.version_number
+        )
         ctx["installed_apps"] = InstalledApplication.objects.filter(
             device=device,
             organization=device.organization,
@@ -145,6 +156,25 @@ class DeviceRevokeView(OrganizationContextMixin, TemplateView):
         except EnrollmentError as exc:
             messages.error(request, str(exc))
         return HttpResponseRedirect(reverse("dashboard:device_detail", args=[device.id]))
+
+
+class DeviceDeleteView(OrganizationContextMixin, TemplateView):
+    manage_required = True
+    http_method_names = ["post"]
+
+    def post(self, request, device_id):
+        device = get_object_or_404(Device, pk=device_id, organization=request.organization)
+        typed = (request.POST.get("confirm_name") or "").strip()
+        if typed != device.display_name:
+            messages.error(request, "Type the exact device name to delete it.")
+            return HttpResponseRedirect(reverse("dashboard:device_detail", args=[device.id]))
+        try:
+            delete_device(device=device, actor_user=request.user, request_meta=request_meta(request))
+            messages.success(request, "Device removed from this organization.")
+        except EnrollmentError as exc:
+            messages.error(request, str(exc))
+            return HttpResponseRedirect(reverse("dashboard:device_detail", args=[device.id]))
+        return HttpResponseRedirect(reverse("dashboard:devices"))
 
 
 class DeviceLocationEnableView(OrganizationContextMixin, TemplateView):
@@ -323,7 +353,10 @@ class PolicyDetailView(OrganizationContextMixin, TemplateView):
         ctx["versions"] = policy.versions.order_by("-version_number")
         ctx["published"] = policy.versions.filter(status=PolicyVersionStatus.PUBLISHED).first()
         ctx["can_manage"] = self.request.membership.can_manage
-        ctx["devices"] = Device.objects.filter(organization=self.request.organization).order_by("display_name")
+        ctx["devices"] = Device.objects.filter(
+            organization=self.request.organization,
+            is_active=True,
+        ).order_by("display_name")
         ctx["assignments"] = policy.device_assignments.select_related("device", "pinned_version")
         from apps.policies.editor import editor_initial, policy_summary, requires_publish_confirmation
         from apps.policies.schema import empty_policy_document

@@ -1,45 +1,75 @@
 {% extends "base.html" %}
-{% block title %}Device{% endblock %}
+{% block title %}{{ device.display_name }}{% endblock %}
 {% block content %}
-<h1 class="h3">{{ device.display_name }}</h1>
+<p class="page-kicker">Device</p>
+<div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+  <h1 class="h3 mb-0">{{ device.display_name }}</h1>
+  <div>
+    <span class="badge badge-soft">{{ device.management_mode }}</span>
+    {% if device.is_active %}
+      <span class="badge text-bg-success">active</span>
+    {% else %}
+      <span class="badge badge-danger-soft">revoked</span>
+    {% endif %}
+  </div>
+</div>
 <p class="text-muted">Device UUID (identifier, not a secret): <code>{{ device.id }}</code></p>
 {% if not device.enrolled_at %}
-  <div class="alert alert-info">Waiting for device enrollment. Heartbeat, location, and policy are not available in Phase 1.</div>
+  <div class="alert alert-info">Waiting for device enrollment. Heartbeat, location, and policy are not available until the phone completes enrollment.</div>
 {% endif %}
 {% if not device.is_active %}
-  <div class="alert alert-danger">This device is revoked and cannot be managed.</div>
+  <div class="alert alert-danger">This device is revoked and cannot be managed. Delete it if you no longer need it in the list.</div>
 {% endif %}
-<dl class="row">
-  <dt class="col-sm-3">Management mode</dt><dd class="col-sm-9">{{ device.management_mode }}</dd>
-  <dt class="col-sm-3">Manufacturer / model</dt><dd class="col-sm-9">{{ device.manufacturer|default:"—" }} {{ device.model }}</dd>
-  <dt class="col-sm-3">Android version</dt><dd class="col-sm-9">{{ device.android_version|default:"—" }}</dd>
-  <dt class="col-sm-3">DPC version</dt><dd class="col-sm-9">{{ device.dpc_version|default:"—" }}</dd>
-  <dt class="col-sm-3">Battery</dt><dd class="col-sm-9">{% if device.status.battery_level != None %}{{ device.status.battery_level }}%{% else %}—{% endif %}</dd>
-  <dt class="col-sm-3">Last seen</dt><dd class="col-sm-9">{{ device.status.last_seen_at|default:"Never" }}</dd>
-  <dt class="col-sm-3">Presence</dt><dd class="col-sm-9">{{ presence }}</dd>
-  <dt class="col-sm-3">Connectivity</dt><dd class="col-sm-9">{{ device.status.connectivity }}</dd>
-  <dt class="col-sm-3">Management active</dt><dd class="col-sm-9">{{ device.status.management_active }}</dd>
-  <dt class="col-sm-3">Assigned policy</dt><dd class="col-sm-9">{% if assigned_policy_version %}v{{ assigned_policy_version }}{% else %}—{% endif %}</dd>
-  <dt class="col-sm-3">Applied policy</dt><dd class="col-sm-9">{% if device.status.applied_policy_version %}v{{ device.status.applied_policy_version }}{% else %}—{% endif %}</dd>
-  <dt class="col-sm-3">DNS filter</dt>
-  <dd class="col-sm-9">
-    {{ device.status.dns_filter_state|default:"unknown" }}
-    {% if device.status.dns_filter_error %}
-      <span class="text-muted">({{ device.status.dns_filter_error }})</span>
-    {% endif %}
-  </dd>
-  <dt class="col-sm-3">Policy ACK</dt>
-  <dd class="col-sm-9">
-    {{ device.status.policy_ack_result|default:"—" }}
-    {% if device.status.applied_policy_version %}
-      — applied v{{ device.status.applied_policy_version }}
-    {% endif %}
-  </dd>
-</dl>
+{% if policy_out_of_date %}
+  <div class="alert alert-warning">Assigned policy version does not match what the phone last applied. Assign the policy you intend, then wait for the phone to pull and ACK it.</div>
+{% endif %}
+
+<div class="card zreta-card mb-4">
+  <div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-sm-3">Manufacturer / model</dt><dd class="col-sm-9">{{ device.manufacturer|default:"—" }} {{ device.model }}</dd>
+      <dt class="col-sm-3">Android version</dt><dd class="col-sm-9">{{ device.android_version|default:"—" }}</dd>
+      <dt class="col-sm-3">DPC version</dt><dd class="col-sm-9">{{ device.dpc_version|default:"—" }}</dd>
+      <dt class="col-sm-3">Battery</dt><dd class="col-sm-9">{% if device.status.battery_level != None %}{{ device.status.battery_level }}%{% else %}—{% endif %}</dd>
+      <dt class="col-sm-3">Last seen</dt><dd class="col-sm-9">{{ device.status.last_seen_at|default:"Never" }}</dd>
+      <dt class="col-sm-3">Presence</dt><dd class="col-sm-9">{{ presence }}</dd>
+      <dt class="col-sm-3">Connectivity</dt><dd class="col-sm-9">{{ device.status.connectivity }}</dd>
+      <dt class="col-sm-3">Management active</dt><dd class="col-sm-9">{{ device.status.management_active }}</dd>
+      <dt class="col-sm-3">Assigned policy</dt>
+      <dd class="col-sm-9">
+        {% if assigned_policy %}
+          <a href="{% url 'dashboard:policy_detail' assigned_policy.id %}">{{ assigned_policy.name }}</a>
+          {% if assigned_policy_version %} v{{ assigned_policy_version }}{% endif %}
+        {% else %}
+          —
+        {% endif %}
+      </dd>
+      <dt class="col-sm-3">Applied policy</dt>
+      <dd class="col-sm-9">
+        {% if device.status.applied_policy_version %}v{{ device.status.applied_policy_version }}{% else %}—{% endif %}
+      </dd>
+      <dt class="col-sm-3">DNS filter</dt>
+      <dd class="col-sm-9">
+        {{ device.status.dns_filter_state|default:"unknown" }}
+        {% if device.status.dns_filter_error %}
+          <span class="text-muted">({{ device.status.dns_filter_error }})</span>
+        {% endif %}
+      </dd>
+      <dt class="col-sm-3">Policy ACK</dt>
+      <dd class="col-sm-9">
+        {{ device.status.policy_ack_result|default:"—" }}
+        {% if device.status.applied_policy_version %}
+          — applied v{{ device.status.applied_policy_version }}
+        {% endif %}
+      </dd>
+    </dl>
+  </div>
+</div>
+
 <h2 class="h5 mt-4">Installed applications</h2>
 <p class="small text-muted">Package name, label, and version last reported by this device. Applications that disappear from a later report stay in history and are hidden here.</p>
 {% if installed_apps %}
-<table class="table table-sm bg-white">
+<table class="table table-sm zreta-table">
   <thead><tr><th>Label</th><th>Package</th><th>Version</th><th>Last reported</th></tr></thead>
   <tbody>
   {% for app in installed_apps %}
@@ -57,22 +87,28 @@
 {% endif %}
 {% if can_view_location %}
 <h2 class="h5 mt-4">Location</h2>
-<p>Collection: <strong>{% if device.location_collection_enabled %}enabled{% else %}disabled{% endif %}</strong></p>
-{% if latest_location %}
-  <p>Latest: {{ latest_location.captured_at }} (accuracy {{ latest_location.accuracy_m|default:"—" }} m, source {{ latest_location.source }}{% if latest_location.is_mock %}, mock location flagged{% endif %})</p>
-  <p>Coordinates: {{ latest_location.latitude }}, {{ latest_location.longitude }}
-    — <a href="{{ latest_location.osm_url }}" rel="noopener noreferrer" target="_blank">OpenStreetMap</a></p>
-{% else %}
-  <p class="text-muted">{{ location_empty_reason }}</p>
-{% endif %}
-{% if device.is_active %}
-<form class="d-inline" method="post" action="{% url 'dashboard:device_location_enable' device.id %}">{% csrf_token %}
-  <button class="btn btn-outline-primary btn-sm" type="submit">Enable location collection</button>
-</form>
-<form class="d-inline" method="post" action="{% url 'dashboard:device_location_disable' device.id %}">{% csrf_token %}
-  <button class="btn btn-outline-secondary btn-sm" type="submit">Disable location collection</button>
-</form>
-{% endif %}
+<div class="card zreta-card mb-3">
+  <div class="card-body">
+    <p>Collection: <strong>{% if device.location_collection_enabled %}enabled{% else %}disabled{% endif %}</strong></p>
+    {% if latest_location %}
+      <p>Latest: {{ latest_location.captured_at }} (accuracy {{ latest_location.accuracy_m|default:"—" }} m, source {{ latest_location.source }}{% if latest_location.is_mock %}, mock location flagged{% endif %})</p>
+      <p>Coordinates: {{ latest_location.latitude }}, {{ latest_location.longitude }}
+        — <a href="{{ latest_location.osm_url }}" rel="noopener noreferrer" target="_blank">OpenStreetMap</a></p>
+    {% else %}
+      <p class="text-muted mb-0">{{ location_empty_reason }}</p>
+    {% endif %}
+    {% if device.is_active %}
+    <div class="mt-3">
+    <form class="d-inline" method="post" action="{% url 'dashboard:device_location_enable' device.id %}">{% csrf_token %}
+      <button class="btn btn-outline-primary btn-sm" type="submit">Enable location collection</button>
+    </form>
+    <form class="d-inline" method="post" action="{% url 'dashboard:device_location_disable' device.id %}">{% csrf_token %}
+      <button class="btn btn-outline-secondary btn-sm" type="submit">Disable location collection</button>
+    </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
 {% if location_history %}
   <h3 class="h6 mt-3">History (up to 50 points, 30-day retention)</h3>
   <ul class="list-unstyled">
@@ -86,12 +122,26 @@
 {% endif %}
 {% endif %}
 {% if current_membership.can_manage and device.is_active %}
-<form class="row g-2 mb-3" method="post" action="{% url 'dashboard:device_rename' device.id %}">{% csrf_token %}
+<form class="row g-2 mb-4" method="post" action="{% url 'dashboard:device_rename' device.id %}">{% csrf_token %}
   <div class="col-auto"><input class="form-control" name="display_name" value="{{ device.display_name }}"></div>
   <div class="col-auto"><button class="btn btn-secondary" type="submit">Rename</button></div>
 </form>
-<form method="post" action="{% url 'dashboard:device_revoke' device.id %}" onsubmit="return confirm('Revoke this device?');">{% csrf_token %}
-  <button class="btn btn-outline-danger" type="submit">Revoke device</button>
+<form class="mb-4" method="post" action="{% url 'dashboard:device_revoke' device.id %}" onsubmit="return confirm('Revoke this device? It will stay in the list until you delete it.');">{% csrf_token %}
+  <button class="btn btn-outline-danger" type="submit">Revoke credentials</button>
 </form>
+{% endif %}
+{% if current_membership.can_manage %}
+<div class="danger-zone mt-4">
+  <h2 class="h6">Remove from dashboard</h2>
+  <p class="small text-muted">This deletes the device record from this organization. Credentials are revoked first if they are still active. The phone is not factory-reset.</p>
+  <form method="post" action="{% url 'dashboard:device_delete' device.id %}">
+    {% csrf_token %}
+    <label class="form-label" for="confirm_name">Type <strong>{{ device.display_name }}</strong> to confirm</label>
+    <div class="row g-2">
+      <div class="col-md-6"><input class="form-control" id="confirm_name" name="confirm_name" autocomplete="off"></div>
+      <div class="col-md-3"><button class="btn btn-danger" type="submit">Delete device</button></div>
+    </div>
+  </form>
+</div>
 {% endif %}
 {% endblock %}

@@ -2,12 +2,15 @@
 {% block title %}Policies{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h3 mb-0">Policies</h1>
+  <div>
+    <p class="page-kicker mb-1">Controls</p>
+    <h1 class="h3 mb-0">Policies</h1>
+  </div>
 </div>
 <p class="text-muted">Organization policies (schema v1). Open a policy to edit the controls that Device Owner phones already enforce, then publish and assign it.</p>
 
 {% if can_manage %}
-<form method="post" action="{% url 'dashboard:policy_create' %}" class="card card-body mb-4">
+<form method="post" action="{% url 'dashboard:policy_create' %}" class="card zreta-card card-body mb-4">
   {% csrf_token %}
   <h2 class="h6">Create policy</h2>
   <div class="row g-2">
@@ -18,7 +21,7 @@
 </form>
 {% endif %}
 
-<table class="table table-sm bg-white">
+<table class="table table-sm zreta-table">
   <thead><tr><th>Name</th><th>Description</th><th>Archived</th><th></th></tr></thead>
   <tbody>
   {% for policy in policies %}

@@ -56,3 +56,91 @@ def test_device_list_empty_for_new_org(client, owner_bundle, password):
     client.post("/login/", {"username": owner_bundle["user"].email, "password": password})
     response = client.get("/devices/")
     assert response.status_code == 200
+    assert b"Phase 1" not in response.content
+    assert b"No devices yet." in response.content
+
+
+@pytest.mark.django_db
+def test_owner_can_delete_device_after_name_confirm(client, owner_bundle, device, password):
+    from apps.audit.models import AuditEvent
+    from apps.devices.services import delete_device
+
+    client.post("/login/", {"username": owner_bundle["user"].email, "password": password})
+    wrong = client.post(
+        reverse("dashboard:device_delete", args=[device.id]),
+        {"confirm_name": "wrong name"},
+    )
+    assert wrong.status_code == 302
+    assert Device.objects.filter(pk=device.id).exists()
+
+    ok = client.post(
+        reverse("dashboard:device_delete", args=[device.id]),
+        {"confirm_name": device.display_name},
+    )
+    assert ok.status_code == 302
+    assert ok["Location"].endswith("/devices/")
+    assert not Device.objects.filter(pk=device.id).exists()
+    event = AuditEvent.objects.get(action="device.deleted")
+    assert event.target_device_id is None
+    assert event.old_snapshot["display_name"] == "Kid phone"
+    assert event.old_snapshot["device_id"] == str(device.id)
+
+    leftover = Device.objects.create(
+        organization=owner_bundle["org"],
+        display_name="Already revoked",
+    )
+    revoke_device(device=leftover, actor_user=owner_bundle["user"])
+    delete_device(device=leftover, actor_user=owner_bundle["user"])
+    assert not Device.objects.filter(pk=leftover.id).exists()
+
+
+@pytest.mark.django_db
+def test_viewer_cannot_delete_device(client, viewer_user, device, password):
+    client.post("/login/", {"username": viewer_user.email, "password": password})
+    response = client.post(
+        reverse("dashboard:device_delete", args=[device.id]),
+        {"confirm_name": device.display_name},
+    )
+    assert response.status_code == 403
+    assert Device.objects.filter(pk=device.id).exists()
+
+
+@pytest.mark.django_db
+def test_other_org_cannot_delete_device(client, other_bundle, device, password):
+    client.post("/login/", {"username": other_bundle["user"].email, "password": password})
+    response = client.post(
+        reverse("dashboard:device_delete", args=[device.id]),
+        {"confirm_name": device.display_name},
+    )
+    assert response.status_code == 404
+    assert Device.objects.filter(pk=device.id).exists()
+
+
+@pytest.mark.django_db
+def test_device_detail_shows_assigned_policy_name(client, owner_bundle, device, password):
+    from apps.policies.assignments import assign_policy_to_device, create_policy
+    from apps.policies.lifecycle import publish_version
+
+    policy, draft = create_policy(
+        organization=owner_bundle["org"],
+        name="TECNO KG5j",
+        description="",
+        actor_user=owner_bundle["user"],
+    )
+    publish_version(
+        organization=owner_bundle["org"],
+        version_id=draft.id,
+        actor_user=owner_bundle["user"],
+    )
+    assign_policy_to_device(
+        organization=owner_bundle["org"],
+        device_id=device.id,
+        policy_id=policy.id,
+        actor_user=owner_bundle["user"],
+    )
+    client.post("/login/", {"username": owner_bundle["user"].email, "password": password})
+    page = client.get(reverse("dashboard:device_detail", args=[device.id]))
+    assert page.status_code == 200
+    assert b"TECNO KG5j" in page.content
+    listing = client.get("/devices/")
+    assert b"TECNO KG5j" in listing.content

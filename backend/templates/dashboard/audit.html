@@ -29,7 +29,15 @@
       <td>{{ event.timestamp }}</td>
       <td>{{ event.action }}</td>
       <td>{{ event.actor_user.email|default:"—" }}</td>
-      <td>{{ event.target_device.display_name|default:"—" }}</td>
+      <td>
+        {% if event.target_device %}
+          {{ event.target_device.display_name }}
+        {% elif event.old_snapshot.display_name %}
+          {{ event.old_snapshot.display_name }}
+        {% else %}
+          —
+        {% endif %}
+      </td>
       <td>{{ event.result }}</td>
       <td class="small">{{ event.new_snapshot }}</td>
     </tr>

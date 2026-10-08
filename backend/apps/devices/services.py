@@ -197,3 +197,34 @@ def rename_device(*, device: Device, display_name: str, actor_user, request_meta
         **(request_meta or {}),
     )
     return device
+
+
+@transaction.atomic
+def delete_device(*, device: Device, actor_user, request_meta: dict | None = None) -> None:
+    """Remove a device row from this organization after revoking credentials.
+
+    Location, inventory, and assignment rows cascade. Audit events keep the
+    organization and drop the device foreign key. The phone is not factory-reset.
+    """
+    device = Device.objects.select_for_update().select_related("organization").get(pk=device.pk)
+    device_id = str(device.id)
+    snapshot = {
+        "device_id": device_id,
+        "display_name": device.display_name,
+        "management_mode": device.management_mode,
+        "was_active": device.is_active,
+    }
+    if device.is_active:
+        revoke_device(device=device, actor_user=actor_user, request_meta=request_meta)
+        device = Device.objects.select_for_update().select_related("organization").get(pk=device.pk)
+    record_audit(
+        organization=device.organization,
+        actor_user=actor_user,
+        target_device=device,
+        action="device.deleted",
+        result="success",
+        old_snapshot=snapshot,
+        new_snapshot=None,
+        **(request_meta or {}),
+    )
+    device.delete()
